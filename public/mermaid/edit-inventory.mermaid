@@ -1,0 +1,46 @@
+graph TD
+    subgraph "Phase 1: User Initiates Edit"
+        A[User clicks 'Edit' button on InventoryListItem.tsx] --> B{Callback: onEditStart}
+        B --> C[InventoryList.tsx]
+        C --> D[InventoryDisplay.tsx]
+        D --> E[Sets state: isEditing = true]
+        E --> F[Re-renders with new state]
+        F --> G[Passes isEditing=true prop down]
+        G --> H[Renders the editing interface]
+    end
+
+    subgraph "Phase 2: User Changes Quantity & Saves"
+        H --> I[User changes quantity in input]
+        I --> J{Callback: onEditQuantityDetailChange}
+        J --> K[Signal travels up to InventoryDisplay.tsx]
+        K --> L[Updates temporary 'editState']
+        L --> M[User clicks 'Save' button]
+        M --> N{Callback: onEditQuantityDetailSave}
+    end
+    
+    subgraph "Phase 3: State Update & Persistence"
+        N --> O[Signal travels up to InventoryDisplay.tsx]
+        O --> P[Calls onUpdateItemQuantityDetail prop]
+        P --> Q[page.tsx]
+        Q --> R[hooks/inventory/useInventoryManager.tsx]
+        R --> S[hooks/inventory/useInventoryOperations.tsx]
+        S --> T[Finds item and updates 'quantities' object]
+        T --> U[Calls saveInventory]
+        U --> V[hooks/inventory/useInventoryStorage.tsx]
+        V --> W[Saves updated inventory array to localStorage]
+    end
+
+    subgraph "Phase 4: UI Updates"
+       S --> X[Returns updated array]
+       X --> Y[Updates central 'inventory' state in page.tsx]
+       Y --> Z[New state is passed down as props]
+       Z --> AA[Sets isEditing = false]
+       AA --> BB[Re-renders the list with updated data]
+       BB --> CC[Passes updated item data to components]
+       CC --> DD[Renders in display mode with new quantities]
+       DD --> EE[User sees the updated count]
+    end
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style W fill:#f80,stroke:#333,stroke-width:2px
+    style EE fill:#9f9,stroke:#333,stroke-width:2px

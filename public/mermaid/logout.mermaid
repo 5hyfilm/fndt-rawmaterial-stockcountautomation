@@ -1,0 +1,21 @@
+graph TD
+    subgraph "User Interaction & Confirmation"
+        A[User clicks 'Logout' in a Header component] --> B{page.tsx};
+        B -- 1. Calls showLogoutConfirmation() from --> C[hooks/useLogoutConfirmation.tsx];
+        C -- 2. Renders --> D[components/modals/LogoutConfirmationModal.tsx];
+        D -- 3. User clicks 'Confirm' --> C;
+        C -- 4. Calls onLogout callback --> B;
+    end
+    
+    subgraph "System Teardown & Cleanup"
+        B -- 5. handleLogout function is executed --> B;
+        B -- 6a. Calls stopCamera() --> E[hooks/useBarcodeDetection.tsx];
+        B -- 6b. Calls resetInventoryState() --> F[hooks/inventory/useInventoryManager.tsx];
+        B -- 6c. Calls logout() --> G[hooks/useEmployeeAuth.tsx];
+        G -- 7. Clears all keys from --> H[localStorage];
+        G -- 8. Sets isAuthenticated to false --> B;
+        B -- 9. Re-renders to show --> I[components/auth/EmployeeBranchForm.tsx];
+    end
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style I fill:#f9f,stroke:#333,stroke-width:2px

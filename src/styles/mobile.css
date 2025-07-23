@@ -1,0 +1,488 @@
+/* Path: src/styles/mobile.css */
+
+/* Mobile-first responsive utilities */
+.mobile-header {
+    @apply px-3 py-2;
+}
+
+.desktop-header {
+    @apply px-6 py-4;
+}
+
+/* Compact component styles */
+.compact-button {
+    @apply p-2 rounded-md text-sm;
+}
+
+.compact-icon {
+    @apply w-4 h-4;
+}
+
+.compact-text {
+    @apply text-xs;
+}
+
+/* Mobile-specific card styles */
+.mobile-card {
+    @apply rounded-lg shadow-sm border border-gray-200 overflow-hidden;
+}
+
+.mobile-card-header {
+    @apply px-3 py-2 bg-gray-50 border-b border-gray-200;
+}
+
+.mobile-card-content {
+    @apply p-3;
+}
+
+/* 🎯 Enhanced Touch-friendly button sizes */
+.touch-button {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+    /* ✅ เพิ่ม tap target size ตาม Apple HIG */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.touch-button-small {
+    @apply min-h-[32px] min-w-[32px] flex items-center justify-center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.touch-button-large {
+    @apply min-h-[56px] min-w-[56px] flex items-center justify-center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Mobile navigation */
+.mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200;
+    /* ✅ เพิ่ม safe area support */
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+.mobile-nav-item {
+    @apply flex-1 flex flex-col items-center justify-center py-2 text-xs;
+}
+
+/* Responsive grid */
+.mobile-grid {
+    @apply grid grid-cols-1 gap-3;
+}
+
+@media (min-width: 640px) {
+    .mobile-grid {
+        @apply grid-cols-2 gap-4;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mobile-grid {
+        @apply grid-cols-3 gap-6;
+    }
+}
+
+/* Mobile-specific spacing */
+.mobile-space-y {
+    @apply space-y-3;
+}
+
+@media (min-width: 768px) {
+    .mobile-space-y {
+        @apply space-y-6;
+    }
+}
+
+/* 🚀 Enhanced Safe area insets for mobile devices */
+.safe-area-top {
+    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 20px);
+}
+
+.safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+
+.safe-area-left {
+    padding-left: env(safe-area-inset-left);
+    padding-left: max(env(safe-area-inset-left), 0px);
+}
+
+.safe-area-right {
+    padding-right: env(safe-area-inset-right);
+    padding-right: max(env(safe-area-inset-right), 0px);
+}
+
+.safe-area-all {
+    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 20px);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    padding-left: env(safe-area-inset-left);
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: env(safe-area-inset-right);
+    padding-right: max(env(safe-area-inset-right), 0px);
+}
+
+/* 🆕 New Safe Area Utilities สำหรับ Sticky Headers */
+.safe-area-sticky-top {
+    position: sticky;
+    top: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+.safe-area-fixed-top {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-left: env(safe-area-inset-left);
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: env(safe-area-inset-right);
+    padding-right: max(env(safe-area-inset-right), 0px);
+}
+
+/* 🆕 Safe Area for Modal/Overlay */
+.safe-area-modal {
+    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+    padding-left: env(safe-area-inset-left);
+    padding-left: max(env(safe-area-inset-left), 16px);
+    padding-right: env(safe-area-inset-right);
+    padding-right: max(env(safe-area-inset-right), 16px);
+}
+
+/* Mobile viewport optimization */
+.mobile-viewport {
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Dynamic viewport height */
+    min-height: 100svh;
+    /* Small viewport height */
+}
+
+/* 🎯 Enhanced PWA Support for iPhone notch */
+.pwa-safe-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* PWA Header ที่ติด safe area */
+.pwa-header-safe {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    margin-top: calc(-1 * env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Full screen mode for camera */
+.camera-fullscreen {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    background: black;
+}
+
+/* Full screen video element */
+.camera-video-fullscreen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Overlay elements positioning in full screen */
+.camera-overlay-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 60;
+    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+.camera-overlay-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 60;
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+.camera-overlay-sides {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Hide on mobile */
+.hidden-mobile {
+    @apply hidden;
+}
+
+@media (min-width: 768px) {
+    .hidden-mobile {
+        @apply block;
+    }
+}
+
+/* Show only on mobile */
+.mobile-only {
+    @apply block;
+}
+
+@media (min-width: 768px) {
+    .mobile-only {
+        @apply hidden;
+    }
+}
+
+/* Mobile-optimized typography */
+.mobile-title {
+    @apply text-lg font-semibold;
+}
+
+@media (min-width: 768px) {
+    .mobile-title {
+        @apply text-xl;
+    }
+}
+
+.mobile-subtitle {
+    @apply text-sm text-gray-600;
+}
+
+@media (min-width: 768px) {
+    .mobile-subtitle {
+        @apply text-base;
+    }
+}
+
+/* Mobile form styles */
+.mobile-form-group {
+    @apply space-y-1;
+}
+
+.mobile-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-base;
+    /* ✅ Prevent zoom on iOS */
+    font-size: 16px;
+}
+
+.mobile-label {
+    @apply text-sm font-medium text-gray-700;
+}
+
+/* Mobile modal styles */
+.mobile-modal {
+    @apply fixed inset-0 z-50 flex items-end justify-center;
+}
+
+@media (min-width: 768px) {
+    .mobile-modal {
+        @apply items-center;
+    }
+}
+
+.mobile-modal-content {
+    @apply w-full max-w-lg bg-white rounded-t-xl;
+    /* ✅ เพิ่ม safe area support */
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+@media (min-width: 768px) {
+    .mobile-modal-content {
+        @apply rounded-xl max-w-md;
+        padding-bottom: 16px;
+        /* Reset padding on desktop */
+    }
+}
+
+/* Full screen camera specific utilities */
+.fullscreen-camera-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: #000;
+    z-index: 1000;
+    /* ✅ Safe area support */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent scrolling when in full screen mode */
+.fullscreen-active {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* Camera guide frame for full screen */
+.camera-guide-fullscreen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 300px;
+    aspect-ratio: 3/2;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    z-index: 70;
+}
+
+/* Floating controls in full screen */
+.camera-controls-floating {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 80;
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+}
+
+/* Status indicators for full screen */
+.camera-status-floating {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 80;
+    padding: 1rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+}
+
+/* Responsive breakpoints for camera */
+@media (max-width: 767px) {
+
+    /* Force full screen on mobile */
+    .camera-container-mobile {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        z-index: 1000;
+    }
+}
+
+@media (min-width: 768px) {
+
+    /* Regular container on desktop */
+    .camera-container-desktop {
+        position: relative;
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+}
+
+/* Animation for entering/exiting full screen */
+.camera-transition {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Backdrop blur for overlays */
+.camera-backdrop-blur {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Text shadows for better readability on camera background */
+.camera-text-shadow {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Button styles for camera overlays */
+.camera-overlay-button {
+    @apply bg-white/20 hover:bg-white/30 active:bg-white/40;
+    @apply text-white border border-white/30;
+    @apply backdrop-blur-sm rounded-lg;
+    @apply transition-all duration-200;
+    @apply min-h-[44px] min-w-[44px];
+    @apply flex items-center justify-center;
+    /* ✅ Enhanced touch support */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.camera-overlay-button:disabled {
+    @apply bg-white/10 text-white/50 border-white/20;
+    @apply cursor-not-allowed;
+}
+
+/* Primary action button in camera */
+.camera-primary-button {
+    @apply bg-blue-500/80 hover:bg-blue-500;
+    @apply text-white border-0;
+    @apply backdrop-blur-sm rounded-full;
+    @apply transition-all duration-200;
+    @apply min-h-[56px] min-w-[56px];
+    @apply flex items-center justify-center;
+    @apply shadow-lg;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Danger button in camera */
+.camera-danger-button {
+    @apply bg-red-500/80 hover:bg-red-500;
+    @apply text-white border-0;
+    @apply backdrop-blur-sm rounded-lg;
+    @apply transition-all duration-200;
+    @apply min-h-[44px] min-w-[44px];
+    @apply flex items-center justify-center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Success button in camera */
+.camera-success-button {
+    @apply bg-green-500/80 hover:bg-green-500;
+    @apply text-white border-0;
+    @apply backdrop-blur-sm rounded-lg;
+    @apply transition-all duration-200;
+    @apply min-h-[44px] min-w-[44px];
+    @apply flex items-center justify-center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}

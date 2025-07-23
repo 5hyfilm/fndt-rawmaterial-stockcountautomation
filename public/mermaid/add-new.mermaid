@@ -1,0 +1,44 @@
+graph TD
+    subgraph "Phase 1: Scan & Product Not Found"
+        A[Scan Flow starts] --> B{productServices.ts}
+        B -- Barcode not found --> C[hooks/product/useProductLookup.tsx]
+        C -- Sets error state --> D(hooks/useBarcodeDetection.tsx)
+        D -- Updates state --> E(page.tsx)
+        E -- Passes error props --> F[components/ProductInfo.tsx]
+        F -- Renders 'Not Found' UI --> G[User sees error message]
+    end
+
+    subgraph "Phase 2: User Initiates Add New Product"
+        G -- User clicks 'Add New Product' --> F
+        F -- Triggers onAddNewProduct callback --> E
+        E -- handleAddNewProduct sets state --> E
+        E -- Passes isVisible prop --> H[components/forms/AddNewProductForm.tsx]
+        H -- Modal appears --> I[User sees the form]
+    end
+
+    subgraph "Phase 3: User Fills Form & Saves"
+        I -- User fills in details --> H
+        H -- User clicks 'Save' --> J{Callback: onSave}
+        J -- Signal travels up to --> E
+    end
+
+    subgraph "Phase 4: Data Persistence"
+        E -- handleSaveNewProduct receives data --> E
+        E -- Creates new Product object --> E
+        E -- Calls addOrUpdateMultiUnitItem --> K[hooks/inventory/useInventoryManager.tsx]
+        K -- Delegates to --> L[hooks/inventory/useInventoryOperations.tsx]
+        L -- Adds new item to inventory --> L
+        L -- Calls saveInventory --> M[hooks/inventory/useInventoryStorage.tsx]
+        M -- Saves inventory to --> N[localStorage]
+    end
+
+    subgraph "Phase 5: UI Cleanup & Feedback"
+        E -- After saving, calls restartForNextScan --> O[hooks/useBarcodeDetection.tsx]
+        O -- Clears product info --> O
+        E -- Hides the form --> H
+        H -- Modal closes --> P[Camera is ready for next scan]
+    end
+
+    style G fill:#f9f,stroke:#333,stroke-width:2px
+    style N fill:#f80,stroke:#333,stroke-width:2px
+    style P fill:#9f9,stroke:#333,stroke-width:2px

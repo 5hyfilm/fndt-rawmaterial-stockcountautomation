@@ -1,0 +1,13 @@
+graph TD
+    subgraph "User's Browser"
+        A[User opens the App] --> B{page.tsx}
+        B --> C[hooks/useEmployeeAuth.tsx]
+        C -- No Session? --> D[components/auth/EmployeeBranchForm.tsx]
+        D -- User Submits Form --> B
+        B -- Sends Login Info --> C
+        C -- Creates Session & Saves --> E[localStorage]
+        C -- Has Session? --> F[Load Main App]
+    end
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#9f9,stroke:#333,stroke-width:2px

@@ -1,0 +1,70 @@
+{
+  "name": "F&N Barcode Scanner",
+  "short_name": "F&N Scanner",
+  "description": "ระบบตรวจจับและอ่าน barcode แบบ real-time",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "lang": "th",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/fn-barcode-scanner-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/fn-barcode-scanner-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/fn-barcode-scanner-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple touch icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "สแกนบาร์โค้ด",
+      "short_name": "สแกน",
+      "description": "เปิดกล้องสแกนบาร์โค้ด",
+      "url": "/?tab=scanner",
+      "icons": [
+        {
+          "src": "/fn-barcode-scanner-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "จัดการสินค้า",
+      "short_name": "สินค้า",
+      "description": "ดูรายการสินค้าในคลัง",
+      "url": "/?tab=inventory",
+      "icons": [
+        {
+          "src": "/fn-barcode-scanner-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "capture_links": "existing-client-navigate"
+}

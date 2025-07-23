@@ -1,0 +1,41 @@
+graph TD
+    subgraph "Frontend: UI & Camera Control"
+        A[User starts camera in CameraSection.tsx] --> B(page.tsx)
+        B -- Triggers --> C[hooks/useBarcodeDetection.tsx]
+        C -- Calls startCamera() from --> D[hooks/camera/useCameraControl.tsx]
+        D -- Accesses camera & renders stream --> A
+    end
+    
+    subgraph "Frontend: Frame Processing & API Call"
+        C -- Periodically calls captureAndProcess() --> E[hooks/detection/useDetectionProcessor.tsx]
+        E -- Captures frame, creates Blob --> F{Sends POST Request}
+        F --> G[app/api/detect-barcode/route.ts]
+    end
+
+    subgraph "Backend: AI Detection"
+        H[backend/app.py]
+        G -- Proxies request to --> H
+        H -- YOLOv5 finds barcode location --> H
+        H -- OpenCV crops & enhances image --> H
+        H -- Pyzbar decodes barcode to string --> H
+        H -- Returns JSON with decoded data --> G
+    end
+    
+    subgraph "Frontend: Product Data Lookup"
+        G -- Returns JSON to --> E
+        E -- Calls updateBarcode() with string --> I[hooks/product/useProductLookup.tsx]
+        I -- Calls findProductByBarcode() --> J[data/services/productServices.ts]
+        J -- Calls loadCSVProducts() --> K[data/loaders/csvLoader.ts]
+        K -- Reads and parses --> L[public/product_list_csv.csv]
+        L -- CSV data --> K
+        K -- Parsed data --> J
+        J -- Finds matching product & returns --> I
+        I -- Updates product state --> C
+        C -- State update triggers re-render --> B
+        B -- Passes product prop to --> M[components/ProductInfo.tsx]
+        M -- Displays product details --> N[User sees product info]
+    end
+    
+    style L fill:#f80,stroke:#333,stroke-width:2px
+    style H fill:#9cf,stroke:#333,stroke-width:2px
+    style N fill:#9f9,stroke:#333,stroke-width:2px

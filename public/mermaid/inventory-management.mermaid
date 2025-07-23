@@ -1,0 +1,16 @@
+graph TD
+    subgraph "User Interaction"
+        A[User clicks 'Add to Inventory' in ProductInfo.tsx] --> B{Callback: onAddToInventory}
+    end
+
+    subgraph "Logic Layer"
+        C(page.tsx) -- Receives Callback --> D(hooks/inventory/useInventoryManager.tsx)
+        D -- Calls --> E(hooks/inventory/useInventoryOperations.tsx)
+        E -- Updates State & Calls Save --> F(hooks/inventory/useInventoryStorage.tsx)
+        F -- Saves to --> G[localStorage]
+    end
+    
+    B --> C
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#f80,stroke:#333,stroke-width:2px
