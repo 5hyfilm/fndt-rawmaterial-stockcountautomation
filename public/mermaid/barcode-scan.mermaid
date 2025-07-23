@@ -26,7 +26,7 @@ graph TD
         E -- Calls updateBarcode() with string --> I[hooks/product/useProductLookup.tsx]
         I -- Calls findProductByBarcode() --> J[data/services/productServices.ts]
         J -- Calls loadCSVProducts() --> K[data/loaders/csvLoader.ts]
-        K -- Reads and parses --> L[public/product_list_csv.csv]
+        K -- Reads and parses --> L[public/milk_powder_list_csv.csv]
         L -- CSV data --> K
         K -- Parsed data --> J
         J -- Finds matching product & returns --> I
