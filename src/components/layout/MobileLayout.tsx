@@ -1,113 +1,169 @@
-// src/components/layout/MobileLayout.tsx
+// Path: src/components/layout/MobileLayout.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { AppHeader } from "../AppHeader";
+import React, { useEffect } from "react";
+import { AppHeader, AppHeaderProps } from "../headers/AppHeader";
+import { Product } from "../../types/product";
+// ✅ FIXED: Import Employee from central types instead of duplicate interface
+import { Employee } from "../../types/auth";
 
-interface EmployeeInfo {
-  employeeName: string;
-  branchCode: string;
-  branchName: string;
-  timestamp: string;
-}
-
+// ✅ Simplified props - ลบ duplicate EmployeeInfo interface
 interface MobileLayoutProps {
-  employee: EmployeeInfo;
+  employee: Employee; // ✅ Use central Employee type
   onLogout: () => void;
   children: React.ReactNode;
-  fullScreenMode?: boolean; // New prop for full screen camera mode
-  hideHeaderInFullScreen?: boolean; // Option to hide header in full screen
+
+  // Layout control
+  fullScreenMode?: boolean;
+  hideHeaderInFullScreen?: boolean;
+  isMobile?: boolean;
+
+  // AppHeader props - pass through to header
+  activeTab?: "scanner" | "inventory";
+  isStreaming?: boolean;
+  lastDetectedCode?: string;
+  product?: Product | null;
+  totalItems?: number;
+  onTabChange?: (tab: "scanner" | "inventory") => void;
+  formatTimeRemaining?: () => string;
+
+  // Optional styling
+  className?: string;
+  contentClassName?: string;
 }
 
+// ✅ Full Screen Layout Component
+const FullScreenLayout: React.FC<{
+  children: React.ReactNode;
+  hideHeader: boolean;
+  headerProps?: AppHeaderProps;
+}> = ({ children, hideHeader, headerProps }) => (
+  <div
+    className="min-h-screen w-full bg-black flex flex-col"
+    style={{
+      paddingTop: "env(safe-area-inset-top)",
+      paddingBottom: "env(safe-area-inset-bottom)",
+      paddingLeft: "env(safe-area-inset-left)",
+      paddingRight: "env(safe-area-inset-right)",
+    }}
+  >
+    {/* Optional floating header */}
+    {!hideHeader && headerProps && (
+      <div className="absolute top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm">
+        <AppHeader {...headerProps} isMobile={true} />
+      </div>
+    )}
+
+    {/* Full screen content */}
+    <div className={`flex-1 ${!hideHeader ? "pt-16" : ""}`}>{children}</div>
+  </div>
+);
+
+// ✅ Regular Layout Component
+const RegularLayout: React.FC<{
+  children: React.ReactNode;
+  headerProps: AppHeaderProps;
+  isMobile: boolean;
+  className?: string;
+  contentClassName?: string;
+}> = ({ children, headerProps, isMobile, className, contentClassName }) => (
+  <div className={`min-h-screen bg-gray-50 flex flex-col ${className || ""}`}>
+    {/* Header */}
+    <AppHeader {...headerProps} isMobile={isMobile} />
+
+    {/* Main Content */}
+    <main
+      className={`flex-1 ${
+        isMobile
+          ? "px-2 py-3" // Minimal padding on mobile
+          : "container mx-auto px-6 py-6" // More spacious on desktop
+      } ${contentClassName || ""}`}
+    >
+      {children}
+    </main>
+  </div>
+);
+
+// ✅ Main MobileLayout Component - Fixed Employee Types
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
   employee,
   onLogout,
   children,
   fullScreenMode = false,
   hideHeaderInFullScreen = true,
+  isMobile = true,
+
+  // AppHeader props
+  activeTab = "scanner",
+  isStreaming = false,
+  lastDetectedCode,
+  product,
+  totalItems = 0,
+  onTabChange = () => {},
+  formatTimeRemaining,
+
+  // Styling props
+  className,
+  contentClassName,
 }) => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile viewport
+  // ✅ Handle full screen mode body styles
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Add/remove body class for full screen mode
-  useEffect(() => {
-    if (fullScreenMode && isMobile) {
-      document.body.classList.add("fullscreen-active");
-      // ไม่บล็อก scroll - ให้แถบสถานะแสดงปกติ
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
+    if (fullScreenMode) {
+      document.body.classList.add("fullscreen-mode");
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
-      document.body.classList.remove("fullscreen-active");
-      document.documentElement.style.overflow = "";
+      document.body.classList.remove("fullscreen-mode");
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
 
-    // Cleanup on unmount
     return () => {
-      document.body.classList.remove("fullscreen-active");
-      document.documentElement.style.overflow = "";
+      document.body.classList.remove("fullscreen-mode");
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
-  }, [fullScreenMode, isMobile]);
+  }, [fullScreenMode]);
 
-  // Full screen mode layout - แต่ยังเหลือพื้นที่สำหรับ status bar
-  if (fullScreenMode && isMobile) {
+  // ✅ FIXED: Create header props with proper Employee interface mapping
+  const headerProps: AppHeaderProps = {
+    employeeName: employee.name, // ✅ Map Employee.name to employeeName for header
+    branchCode: employee.branchCode,
+    branchName: employee.branchName,
+    formatTimeRemaining,
+    activeTab,
+    isStreaming,
+    lastDetectedCode,
+    product,
+    totalItems,
+    onLogout,
+    onTabChange,
+  };
+
+  // ✅ Conditional rendering based on full screen mode
+  if (fullScreenMode) {
     return (
-      <div
-        className="min-h-screen w-full bg-black"
-        style={{
-          paddingTop: "env(safe-area-inset-top)",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
+      <FullScreenLayout
+        hideHeader={hideHeaderInFullScreen}
+        headerProps={hideHeaderInFullScreen ? undefined : headerProps}
       >
-        {/* Optional floating header */}
-        {!hideHeaderInFullScreen && (
-          <div
-            className="absolute top-0 left-0 right-0 z-50"
-            style={{ paddingTop: "env(safe-area-inset-top)" }}
-          >
-            <AppHeader
-              employee={employee}
-              onLogout={onLogout}
-              compact={true}
-              transparent={true}
-              floating={true}
-            />
-          </div>
-        )}
-
-        {/* Full screen content */}
         {children}
-      </div>
+      </FullScreenLayout>
     );
   }
 
-  // Regular layout
+  // ✅ Regular layout
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col mobile-viewport">
-      {/* Header */}
-      <AppHeader employee={employee} onLogout={onLogout} compact={isMobile} />
-
-      {/* Main Content */}
-      <main
-        className={`flex-1 ${
-          isMobile
-            ? "px-2 py-3" // Minimal padding on mobile
-            : "container mx-auto px-6 py-6" // More spacious on desktop
-        }`}
-      >
-        {children}
-      </main>
-    </div>
+    <RegularLayout
+      headerProps={headerProps}
+      isMobile={isMobile}
+      className={className}
+      contentClassName={contentClassName}
+    >
+      {children}
+    </RegularLayout>
   );
 };
+
+// ✅ REMOVED: Duplicate EmployeeInfo interface export
+export type { MobileLayoutProps };

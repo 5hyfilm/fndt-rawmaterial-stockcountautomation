@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { Archive, Plus, Minus, Check, Package2 } from "lucide-react";
 import { Product } from "../../types/product";
-import { QuantityInput } from "../../hooks/inventory/types";
+import { QuantityInput } from "../../types/inventory";
 
 interface InventoryAddSectionProps {
   product: Product;
@@ -36,7 +36,7 @@ const UNIT_CONFIG = {
     label: "ลัง",
     shortLabel: "CS",
     icon: Archive,
-    color: "bg-orange-100 text-orange-700",
+    color: "bg-purple-100 text-purple-700",
   },
 };
 
@@ -172,7 +172,7 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
       {/* Product Info Summary */}
       <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
         <div className="text-sm">
-          <div className="font-medium text-blue-900">{product.name}</div>
+          {/* <div className="font-medium text-blue-900">{product.name}</div> */}
           <div className="text-blue-700 text-xs mt-1">
             Material Code: {product.id || product.barcode}
           </div>
@@ -268,12 +268,6 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
 
       {/* ✅ Summary display with multi-unit info */}
       <div className="text-xs text-gray-500 text-center space-y-1">
-        <div>
-          จะเพิ่ม:{" "}
-          <span className="font-medium text-gray-700">
-            {quantity} {unitConfig.label}
-          </span>
-        </div>
         <div className="flex items-center justify-center gap-1">
           <span>📦</span>
           <span>รายการจะรวมตาม Material Code</span>

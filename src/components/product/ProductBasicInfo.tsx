@@ -2,18 +2,17 @@
 "use client";
 
 import React from "react";
-import { Weight, Archive, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { Product } from "../../types/product";
-import { formatPrice, formatQuantity } from "./utils";
+import { formatPrice } from "./utils";
 
-// Extended interface for products with additional properties
-interface ExtendedProduct extends Product {
-  packSizeInfo?: {
-    displayText: string;
-    count?: number;
-  };
-  packSize?: number;
-}
+// interface ExtendedProduct extends Product {
+//   packSizeInfo?: {
+//     displayText: string;
+//     count?: number;
+//   };
+//   packSize?: number;
+// }
 
 interface ProductBasicInfoProps {
   product: Product;
@@ -22,43 +21,36 @@ interface ProductBasicInfoProps {
 
 export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
   product,
-  currentInventoryQuantity,
+  // currentInventoryQuantity,
 }) => {
-  // Cast product to extended type for additional properties
-  const extendedProduct = product as ExtendedProduct;
+  // const extendedProduct = product as ExtendedProduct;
 
-  // Helper function to display size information
-  const getSizeDisplay = (): string | null => {
-    // ถ้ามี packSizeInfo (จาก CSV parsing ใหม่)
-    if (extendedProduct.packSizeInfo?.displayText) {
-      return extendedProduct.packSizeInfo.displayText;
-    }
+  // const getSizeDisplay = (): string | null => {
+  //   if (extendedProduct.packSizeInfo?.displayText) {
+  //     return extendedProduct.packSizeInfo.displayText;
+  //   }
 
-    // ถ้ามี packSize (จาก CSV แบบเก่า)
-    if (extendedProduct.packSize && extendedProduct.packSize > 1) {
-      return `${extendedProduct.packSize} ชิ้น/แพ็ค`;
-    }
+  //   if (extendedProduct.packSize && extendedProduct.packSize > 1) {
+  //     return `${extendedProduct.packSize} ชิ้น/แพ็ค`;
+  //   }
 
-    // ถ้ามี size และ unit ปกติ
-    if (product.size && product.unit) {
-      return `${product.size} ${product.unit}`;
-    }
+  //   if (product.size && product.unit) {
+  //     return `${product.size} ${product.unit}`;
+  //   }
 
-    // ถ้ามีแค่ size
-    if (product.size) {
-      return product.size;
-    }
+  //   if (product.size) {
+  //     return product.size;
+  //   }
 
-    return null;
-  };
+  //   return null;
+  // };
 
-  const sizeDisplay = getSizeDisplay();
+  // const sizeDisplay = getSizeDisplay();
 
   return (
     <div className="space-y-4">
-      {/* Size and Stock Info */}
+      {/* Size and Stock Info - COMMENTED OUT (ไม่ใช้แล้วแต่เก็บไว้)
       <div className="grid grid-cols-2 gap-4">
-        {/* แสดง Size card เฉพาะเมื่อมีข้อมูล */}
         {sizeDisplay && (
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
@@ -89,6 +81,7 @@ export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
           </p>
         </div>
       </div>
+      */}
 
       {/* Price Info */}
       {product.price && (

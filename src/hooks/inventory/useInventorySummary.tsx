@@ -1,8 +1,8 @@
-// src/hooks/inventory/useInventorySummary.tsx - Phase 2: Enhanced Summary with Quantity Details
+// Path: src/hooks/inventory/useInventorySummary.tsx - Cleaned Version (No Legacy Code)
 "use client";
 
 import { useMemo } from "react";
-import { InventoryItem, InventorySummary } from "./types";
+import { InventoryItem, InventorySummary } from "../../types/inventory";
 
 interface UseInventorySummaryProps {
   inventory: InventoryItem[];
@@ -11,7 +11,7 @@ interface UseInventorySummaryProps {
 export const useInventorySummary = ({
   inventory,
 }: UseInventorySummaryProps) => {
-  // ✅ Enhanced summary calculations with quantity breakdown
+  // ✅ Modern summary calculations (ไม่มี legacy fallback)
   const summary: InventorySummary = useMemo(() => {
     if (inventory.length === 0) {
       return {
@@ -24,7 +24,7 @@ export const useInventorySummary = ({
           totalEA: 0,
           totalDSP: 0,
           totalCS: 0,
-          itemsWithMultipleUnits: 0, // ✅ เพิ่มฟิลด์ที่ขาดหายไป
+          itemsWithMultipleUnits: 0,
         },
       };
     }
@@ -55,53 +55,24 @@ export const useInventorySummary = ({
       brands[brand] = (brands[brand] || 0) + 1;
     });
 
-    // ✅ Enhanced quantity breakdown
+    // ✅ Modern quantity breakdown (ใช้ quantities โดยตรง)
     let totalEA = 0;
     let totalDSP = 0;
     let totalCS = 0;
-    let itemsWithMultipleUnits = 0; // ✅ เพิ่มตัวนับสำหรับ items ที่มีหลายหน่วย
+    let itemsWithMultipleUnits = 0;
 
     inventory.forEach((item) => {
-      // ✅ ใช้ quantities object แทนการใช้ quantityDetail
-      if (item.quantities) {
-        const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
+      // ✅ ใช้ quantities object โดยตรง (ไม่มี legacy fallback)
+      const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
 
-        totalCS += cs;
-        totalDSP += dsp;
-        totalEA += ea;
+      totalCS += cs;
+      totalDSP += dsp;
+      totalEA += ea;
 
-        // ✅ นับจำนวน SKU ที่มีมากกว่า 1 หน่วย
-        const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
-        if (activeUnits > 1) {
-          itemsWithMultipleUnits++;
-        }
-      } else if (item.quantityDetail) {
-        // ✅ Handle quantityDetail format (new structure)
-        const { cs = 0, dsp = 0, ea = 0 } = item.quantityDetail;
-
-        totalCS += cs;
-        totalDSP += dsp;
-        totalEA += ea;
-
-        // ✅ Check for multiple units in this item
-        const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
-        if (activeUnits > 1) {
-          itemsWithMultipleUnits++;
-        }
-      } else {
-        // ✅ Handle legacy format
-        const barcodeType = item.barcodeType || "ea";
-        switch (barcodeType) {
-          case "ea":
-            totalEA += item.quantity;
-            break;
-          case "dsp":
-            totalDSP += item.quantity;
-            break;
-          case "cs":
-            totalCS += item.quantity;
-            break;
-        }
+      // ✅ นับจำนวน SKU ที่มีมากกว่า 1 หน่วย
+      const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
+      if (activeUnits > 1) {
+        itemsWithMultipleUnits++;
       }
     });
 
@@ -115,7 +86,7 @@ export const useInventorySummary = ({
         totalEA,
         totalDSP,
         totalCS,
-        itemsWithMultipleUnits, // ✅ ส่งค่าที่ type ต้องการ
+        itemsWithMultipleUnits,
       },
     };
   }, [inventory]);
@@ -231,38 +202,26 @@ export const useInventorySummary = ({
     return breakdown;
   };
 
-  // ✅ Filter helpers for different views
+  // ✅ Modern filter helpers (ใช้ quantities โดยตรง)
   const getItemsByType = (type: "ea" | "dsp" | "cs"): InventoryItem[] => {
     return inventory.filter((item) => {
-      if (item.quantities) {
-        return (item.quantities[type] || 0) > 0;
-      }
-      return (
-        item.quantityDetail?.scannedType === type ||
-        (!item.quantityDetail && item.barcodeType === type)
-      );
+      return (item.quantities[type] || 0) > 0;
     });
   };
 
   const getMultiUnitItems = (): InventoryItem[] => {
     return inventory.filter((item) => {
-      if (item.quantities) {
-        const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
-        const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
-        return activeUnits > 1;
-      }
-      return false;
+      const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
+      const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
+      return activeUnits > 1;
     });
   };
 
   const getSingleUnitItems = (): InventoryItem[] => {
     return inventory.filter((item) => {
-      if (item.quantities) {
-        const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
-        const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
-        return activeUnits === 1;
-      }
-      return true; // Legacy items are considered single unit
+      const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
+      const activeUnits = [cs > 0, dsp > 0, ea > 0].filter(Boolean).length;
+      return activeUnits === 1;
     });
   };
 

@@ -1,15 +1,15 @@
-// src/hooks/canvas/useCanvasRenderer.tsx
+// Path: src/hooks/canvas/useCanvasRenderer.tsx
 "use client";
 
 import { useRef, useCallback } from "react";
 import { Detection } from "../../types/detection";
-import { Product } from "../../types/product";
+import { Product, ProductUnitType } from "../../types/product";
+import type { UseCanvasRendererReturn } from "../../types/canvas";
 
-export const useCanvasRenderer = () => {
+export const useCanvasRenderer = (): UseCanvasRendererReturn => {
   const canvasRef = useRef<HTMLCanvasElement>(null!);
   const containerRef = useRef<HTMLDivElement>(null!);
 
-  // Update canvas size
   const updateCanvasSize = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -21,12 +21,11 @@ export const useCanvasRenderer = () => {
     }
   }, []);
 
-  // Draw detections on canvas
   const drawDetections = useCallback(
     (
       detections: Detection[],
       product: Product | null,
-      detectedBarcodeType: "ea" | "dsp" | "cs" | null,
+      detectedUnitType: ProductUnitType | null, // ✅ Changed parameter name and type
       videoRef: React.RefObject<HTMLVideoElement>
     ) => {
       const canvas = canvasRef.current;
@@ -64,10 +63,10 @@ export const useCanvasRenderer = () => {
         ctx.fillText(confidence, x, y - 8);
 
         // Draw barcode type if available
-        if (product && detectedBarcodeType) {
+        if (product && detectedUnitType) {
           ctx.fillStyle = "#059669";
           ctx.font = "10px Arial";
-          const typeText = `${detectedBarcodeType.toUpperCase()}`;
+          const typeText = `${detectedUnitType.toUpperCase()}`;
           ctx.fillText(typeText, x + width - 30, y - 8);
         }
 
@@ -108,11 +107,8 @@ export const useCanvasRenderer = () => {
   );
 
   return {
-    // Refs
     canvasRef,
     containerRef,
-
-    // Actions
     updateCanvasSize,
     drawDetections,
   };

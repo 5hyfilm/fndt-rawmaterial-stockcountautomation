@@ -42,7 +42,7 @@ export const readCSVFile = async (): Promise<string> => {
     console.log("🌐 Loading CSV from browser environment...");
 
     const baseUrl = window.location.origin;
-    const csvUrl = `${baseUrl}/milk_powder_list_csv.csv`;
+    const csvUrl = `${baseUrl}/product_list_csv.csv`;
 
     console.log("📡 Fetching from:", csvUrl);
 
@@ -90,7 +90,7 @@ export const readCSVFile = async (): Promise<string> => {
       const csvPath = path.join(
         process.cwd(),
         "public",
-        "milk_powder_list_csv.csv"
+        "product_list_csv.csv"
       );
       console.log("📂 Reading from path:", csvPath);
 
@@ -106,7 +106,7 @@ export const readCSVFile = async (): Promise<string> => {
       console.log("🔄 Trying fetch fallback in server...");
       const csvUrl = `${
         process.env.NEXTAUTH_URL || "http://localhost:3000"
-      }/milk_powder_list_csv.csv`;
+      }/product_list_csv.csv`;
 
       try {
         const response = await fetch(csvUrl, {

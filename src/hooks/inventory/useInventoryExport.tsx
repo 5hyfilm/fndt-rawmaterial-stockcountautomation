@@ -3,6 +3,7 @@
 
 import { useCallback } from "react";
 import { Product } from "../../types/product";
+import { Employee } from "@/types/auth";
 
 interface InventoryItem {
   id: string;
@@ -35,11 +36,11 @@ interface InventoryItem {
   description?: string; // เพิ่ม field description
 }
 
-interface EmployeeContext {
+// ✅ FIXED: Use Employee with 'name' field instead of 'employeeName'
+type EmployeeContext = Pick<Employee, "name" | "branchCode" | "branchName"> & {
+  // ✅ Add backward compatibility alias
   employeeName: string;
-  branchCode: string;
-  branchName: string;
-}
+};
 
 interface ExportConfig {
   includeEmployeeInfo: boolean;
@@ -89,23 +90,26 @@ export const useInventoryExport = ({
   setError,
 }: UseInventoryExportProps) => {
   // Helper function to escape CSV fields
-  const escapeCsvField = useCallback((field: string | number): string => {
-    if (typeof field === "number") return field.toString();
-    if (!field) return "";
+  const escapeCsvField = useCallback(
+    (field: string | number | undefined | null): string => {
+      if (typeof field === "number") return field.toString();
+      if (!field) return "";
 
-    const str = field.toString();
+      const str = field.toString();
 
-    if (
-      str.includes(",") ||
-      str.includes('"') ||
-      str.includes("\n") ||
-      str.includes("\r")
-    ) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
+      if (
+        str.includes(",") ||
+        str.includes('"') ||
+        str.includes("\n") ||
+        str.includes("\r")
+      ) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
 
-    return str;
-  }, []);
+      return str;
+    },
+    []
+  );
 
   // ✅ Helper function to determine if item is a new product
   const isNewProduct = useCallback((item: InventoryItem): boolean => {
@@ -193,7 +197,7 @@ export const useInventoryExport = ({
         // Header with employee info
         if (config.includeEmployeeInfo && employeeContext) {
           csvContent += `ผู้นับสต็อก,${escapeCsvField(
-            employeeContext.employeeName
+            employeeContext.employeeName // ✅ Use backward compatibility field
           )}\n`;
           csvContent += `รหัสสาขา,${escapeCsvField(
             employeeContext.branchCode

@@ -1,12 +1,17 @@
-// ./src/hooks/product/useProductInfo.tsx
+// Path: src/hooks/product/useProductInfo.tsx
+// 🔧 Fixed Import - Types now from central location
+
 "use client";
 
 import { useState, useCallback } from "react";
-import { Product } from "../../types/product";
+import {
+  Product,
+  ProductInfoConfig,
+  UseProductInfoReturn,
+} from "../../types/product"; // ✅ FIXED: Import from central location
 import { useProductCache } from "./useProductCache";
 import { useProductFetcher } from "./useProductFetcher";
 import { useProductValidator } from "./useProductValidator";
-import { ProductInfoConfig, UseProductInfoReturn } from "./types";
 
 const DEFAULT_CONFIG: ProductInfoConfig = {
   enableCaching: true,
@@ -89,93 +94,83 @@ export const useProductInfo = (
     setError(null);
   }, []);
 
-  // Main fetch function
+  // Fetch product by barcode
   const fetchProductByBarcode = useCallback(
     async (barcode: string) => {
-      if (!barcode.trim()) return;
-
-      const normalizedBarcode = validator.normalizeBarcode(barcode);
-      if (normalizedBarcode === lastSearchedBarcode) return;
-
-      setIsLoading(true);
-      setError(null);
-      setLastSearchedBarcode(normalizedBarcode);
+      if (!barcode) return;
 
       try {
+        setIsLoading(true);
+        setError(null);
+        setLastSearchedBarcode(barcode);
+
+        // Validate barcode first
+        const validation = validator.validateBarcode(barcode);
+        if (!validation.isValid) {
+          throw new Error(`Invalid barcode: ${validation.errors.join(", ")}`);
+        }
+
+        const normalizedBarcode = validator.normalizeBarcode(barcode);
+
         // Check cache first
         if (config.enableCaching) {
           const cachedProduct = cache.get(normalizedBarcode);
           if (cachedProduct) {
-            console.log("✅ Using cached product:", cachedProduct.name);
             setProduct(cachedProduct);
             setIsLoading(false);
             return;
           }
         }
 
-        // Validate barcode
-        const validation = validator.validateBarcode(normalizedBarcode);
-        if (!validation.isValid) {
-          setError(`รหัสสินค้าไม่ถูกต้อง: ${validation.errors.join(", ")}`);
-          setProduct(null);
-          setIsLoading(false);
-          return;
-        }
-
         // Fetch from API
-        const result = await fetcher.fetchProduct(normalizedBarcode);
+        const response = await fetcher.fetchProduct(normalizedBarcode);
 
-        if (result.success && result.data) {
-          setProduct(result.data);
+        if (response.success && response.data) {
+          setProduct(response.data);
 
           // Cache the result
           if (config.enableCaching) {
-            cache.set(normalizedBarcode, result.data);
+            cache.set(normalizedBarcode, response.data);
           }
         } else {
-          setProduct(null);
-          setError(result.error || "ไม่พบข้อมูลสินค้า");
+          throw new Error(response.error || "Failed to fetch product");
         }
-      } catch (error: unknown) {
+      } catch (err) {
+        const errorMessage = getErrorMessage(err);
+        setError(errorMessage);
         setProduct(null);
-        setError(getErrorMessage(error));
       } finally {
         setIsLoading(false);
       }
     },
-    [lastSearchedBarcode, validator, cache, fetcher, config]
+    [validator, cache, fetcher, config.enableCaching]
   );
 
-  // Manual retry function
-  const retryFetch = useCallback(() => {
-    if (lastSearchedBarcode) {
-      setLastSearchedBarcode("");
-      fetchProductByBarcode(lastSearchedBarcode);
-    }
-  }, [lastSearchedBarcode, fetchProductByBarcode]);
-
-  // Debounced update barcode
+  // Update barcode (used by detection)
   const updateBarcode = useCallback(
     (barcode: string) => {
-      const normalizedBarcode = validator.normalizeBarcode(barcode);
-      const lastNormalized = validator.normalizeBarcode(lastSearchedBarcode);
-
-      if (normalizedBarcode && normalizedBarcode !== lastNormalized) {
-        setError(null);
-
-        if (config.enableDebouncing) {
-          const timeoutId = setTimeout(() => {
-            fetchProductByBarcode(normalizedBarcode);
-          }, config.debounceDelayMs);
-
-          return () => clearTimeout(timeoutId);
-        } else {
-          fetchProductByBarcode(normalizedBarcode);
-        }
+      if (barcode !== lastSearchedBarcode) {
+        fetchProductByBarcode(barcode);
       }
     },
-    [fetchProductByBarcode, lastSearchedBarcode, validator, config]
+    [fetchProductByBarcode, lastSearchedBarcode]
   );
+
+  // Retry fetch
+  const retryFetch = useCallback(() => {
+    if (lastSearchedBarcode) {
+      fetchProductByBarcode(lastSearchedBarcode);
+    }
+  }, [fetchProductByBarcode, lastSearchedBarcode]);
+
+  // Cache utilities
+  const clearCache = useCallback(() => {
+    cache.clear();
+  }, [cache]);
+
+  const getCacheStats = useCallback(() => {
+    return cache.getStats();
+  }, [cache]);
 
   return {
     // State
@@ -193,7 +188,7 @@ export const useProductInfo = (
     retryFetch,
 
     // Cache utilities
-    clearCache: cache.clear,
-    getCacheStats: cache.getStats,
+    clearCache,
+    getCacheStats,
   };
 };

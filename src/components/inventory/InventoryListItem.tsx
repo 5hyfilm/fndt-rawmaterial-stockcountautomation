@@ -1,4 +1,4 @@
-// Path: src/components/inventory/InventoryListItem.tsx - Mobile Responsive Version
+// Path: src/components/inventory/InventoryListItem.tsx - Cleaned Version (No Legacy Code)
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -14,7 +14,7 @@ import {
   Package2,
   Clock,
 } from "lucide-react";
-import { InventoryItem, QuantityDetail } from "../../hooks/inventory/types";
+import { InventoryItem, QuantityDetail } from "../../types/inventory";
 
 interface InventoryListItemProps {
   item: InventoryItem;
@@ -37,14 +37,14 @@ interface InventoryListItemProps {
   ) => void;
 }
 
-// ✅ Enhanced edit state for consistent multi-unit support
+// ✅ Enhanced edit state for multi-unit support
 interface EditState {
   csQuantity: number;
   dspQuantity: number;
   eaQuantity: number;
 }
 
-// ✅ Consistent unit configuration with proper styling
+// ✅ Unit configuration with proper styling
 const UNIT_CONFIG = {
   ea: {
     label: "ชิ้น",
@@ -93,7 +93,7 @@ const formatTimestamp = (timestamp: string): string => {
   }
 };
 
-// ✅ FIXED: Helper function to get correct product code
+// ✅ Helper function to get correct product code
 const getProductCode = (item: InventoryItem): string => {
   // ✅ ตรวจสอบว่าเป็นสินค้าใหม่หรือไม่
   const isNewProduct =
@@ -148,12 +148,12 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Initialize edit state based on all possible units
+  // ✅ Initialize edit state (ไม่มี optional chaining - quantities เป็น required)
   const [editState, setEditState] = useState<EditState>(() => {
     return {
-      csQuantity: item.quantities?.cs || 0,
-      dspQuantity: item.quantities?.dsp || 0,
-      eaQuantity: item.quantities?.ea || 0,
+      csQuantity: item.quantities.cs || 0,
+      dspQuantity: item.quantities.dsp || 0,
+      eaQuantity: item.quantities.ea || 0,
     };
   });
 
@@ -162,10 +162,10 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
     return ["cs", "dsp", "ea"];
   };
 
-  // ✅ Check units with quantity > 0 for calculations
+  // ✅ Check units with quantity > 0 (ไม่มี optional chaining)
   const getActiveUnits = (): Array<"cs" | "dsp" | "ea"> => {
     return (["cs", "dsp", "ea"] as const).filter(
-      (unit) => (item.quantities?.[unit] || 0) > 0
+      (unit) => (item.quantities[unit] || 0) > 0
     );
   };
 
@@ -183,12 +183,12 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
   const primaryUnit = getPrimaryUnit();
   const primaryUnitConfig = UNIT_CONFIG[primaryUnit];
 
-  // ✅ Update edit state when item changes
+  // ✅ Update edit state when item changes (ไม่มี optional chaining)
   useEffect(() => {
     setEditState({
-      csQuantity: item.quantities?.cs || 0,
-      dspQuantity: item.quantities?.dsp || 0,
-      eaQuantity: item.quantities?.ea || 0,
+      csQuantity: item.quantities.cs || 0,
+      dspQuantity: item.quantities.dsp || 0,
+      eaQuantity: item.quantities.ea || 0,
     });
   }, [item.quantities]);
 
@@ -264,7 +264,7 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
     );
   };
 
-  // ✅ MOBILE RESPONSIVE: Responsive quantity display
+  // ✅ Mobile responsive quantity display (ไม่มี optional chaining)
   const renderQuantityDisplay = () => {
     return (
       <div className="text-right min-w-0">
@@ -272,7 +272,7 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 justify-end">
           {allUnits.map((unit, index) => {
             const config = UNIT_CONFIG[unit];
-            const quantity = item.quantities?.[unit] || 0;
+            const quantity = item.quantities[unit] || 0; // ไม่มี optional chaining
             const hasQuantity = quantity > 0;
 
             return (
@@ -307,7 +307,7 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
     );
   };
 
-  // ✅ MOBILE RESPONSIVE: Mobile-friendly editing interface
+  // ✅ Mobile-friendly editing interface
   const renderEditingInterface = () => {
     return (
       <div className="space-y-3">
@@ -422,7 +422,7 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
 
         {/* Product Info - Flexible layout */}
         <div className="flex-1 min-w-0">
-          {/* ✅ FIXED: แสดงรายละเอียดสินค้า (productData.description) สำหรับสินค้าใหม่ */}
+          {/* Product description/name */}
           <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base leading-tight">
             {item.productData?.description || item.productName}
           </h3>
@@ -444,7 +444,7 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
             )}
           </div>
 
-          {/* ✅ FIXED: Material Code - แสดงรหัสสินค้าที่ถูกต้อง */}
+          {/* Material Code */}
           <div className="text-xs text-gray-500 mt-1 font-mono truncate">
             รหัส F/FG: {getProductCode(item)}
           </div>

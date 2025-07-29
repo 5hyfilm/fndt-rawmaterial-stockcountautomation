@@ -1,12 +1,12 @@
-// ./src/components/layout/MobileScannerLayout.tsx
+// src/components/layout/MobileScannerLayout.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { CameraSection } from "../CameraSection";
 import { MobileProductSlide } from "./MobileProductSlide";
-import { Detection } from "../../hooks/detection/types";
+import { Detection } from "../../types/detection";
 import { Product } from "../../types/product";
-import { QuantityInput } from "../../hooks/inventory/types"; // ✅ เพิ่ม import QuantityInput
+import { QuantityInput } from "../../types/inventory";
 
 interface MobileScannerLayoutProps {
   // Camera props
@@ -25,7 +25,7 @@ interface MobileScannerLayoutProps {
   drawDetections: () => void;
   updateCanvasSize: () => void;
 
-  // ⭐ เพิ่ม torch props
+  // Torch props
   torchOn?: boolean;
   onToggleTorch?: () => void;
 
@@ -35,15 +35,15 @@ interface MobileScannerLayoutProps {
   isLoadingProduct: boolean;
   productError: string | null;
   lastDetectedCode: string;
-  scannedBarcode?: string; // ✅ เพิ่ม: บาร์โค้ดที่ scan ได้
+  scannedBarcode?: string;
 
   // Product actions
   onAddToInventory: (
     product: Product,
-    quantityInput: QuantityInput, // ✅ FIX: เปลี่ยนจาก quantity: number เป็น quantityInput: QuantityInput
+    quantityInput: QuantityInput,
     barcodeType?: "ea" | "dsp" | "cs"
   ) => boolean;
-  onAddNewProduct?: (barcode: string) => void; // ✅ เพิ่ม: callback สำหรับเพิ่มสินค้าใหม่
+  onAddNewProduct?: (barcode: string) => void;
   restartForNextScan: () => void;
   currentInventoryQuantity: number;
 
@@ -69,7 +69,7 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
   drawDetections,
   updateCanvasSize,
 
-  // ⭐ รับ torch props
+  // Torch props
   torchOn = false,
   onToggleTorch,
 
@@ -79,11 +79,11 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
   isLoadingProduct,
   productError,
   lastDetectedCode,
-  scannedBarcode, // ✅ รับ scannedBarcode prop
+  scannedBarcode,
 
   // Product actions
   onAddToInventory,
-  onAddNewProduct, // ✅ รับ callback สำหรับเพิ่มสินค้าใหม่
+  onAddNewProduct,
   restartForNextScan,
   currentInventoryQuantity,
 
@@ -93,7 +93,7 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
 }) => {
   const [showProductSlide, setShowProductSlide] = useState(false);
 
-  // ✅ แก้ไข: แสดง slide เมื่อมี barcode detection (ไม่ว่าจะเจอสินค้าหรือไม่)
+  // แสดง slide เมื่อมี barcode detection (ไม่ว่าจะเจอสินค้าหรือไม่)
   useEffect(() => {
     // แสดง slide เมื่อ:
     // 1. มี lastDetectedCode (detect barcode ได้)
@@ -166,7 +166,7 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
         isStreaming={isStreaming}
         processingQueue={processingQueue}
         detections={detections}
-        startCamera={startCamera} // ✅ เพิ่ม props ที่ CameraSection ต้องการ
+        startCamera={startCamera}
         stopCamera={stopCamera}
         switchCamera={switchCamera}
         captureAndProcess={captureAndProcess}
@@ -174,10 +174,6 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
         updateCanvasSize={updateCanvasSize}
         fullScreen={fullScreen}
         showHeader={showHeader}
-        // ✅ FIX: ลบ props ที่ CameraSection ไม่รับ
-        // product={product}           // ❌ ลบออก
-        // isLoadingProduct={isLoadingProduct}  // ❌ ลบออก
-        // ✅ เพิ่ม torch props ที่ CameraSection รองรับ
         torchOn={torchOn}
         onToggleTorch={onToggleTorch}
       />
@@ -245,17 +241,17 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
         </div>
       )}
 
-      {/* ✅ Product Slide Overlay - แสดงทั้งเจอและไม่เจอสินค้า */}
+      {/* Product Slide Overlay - แสดงทั้งเจอและไม่เจอสินค้า */}
       <MobileProductSlide
         isVisible={showProductSlide}
         product={product}
         detectedBarcodeType={detectedBarcodeType || undefined}
         currentInventoryQuantity={currentInventoryQuantity}
-        scannedBarcode={scannedBarcode || lastDetectedCode} // ✅ ใช้ scannedBarcode ถ้ามี หรือ lastDetectedCode
-        productError={productError || undefined} // ✅ FIX: แปลง null เป็น undefined
+        scannedBarcode={scannedBarcode || lastDetectedCode}
+        productError={productError || undefined}
         onClose={handleCloseProductSlide}
         onAddToInventory={onAddToInventory}
-        onAddNewProduct={onAddNewProduct} // ✅ ส่ง callback สำหรับเพิ่มสินค้าใหม่
+        onAddNewProduct={onAddNewProduct}
       />
     </div>
   );

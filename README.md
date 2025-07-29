@@ -7,7 +7,7 @@ AI-powered barcode scanning system with Next.js frontend and Python Flask backen
 - **Real-time webcam scanning** with YOLO v5 object detection
 - **Multi-format support**: QR Code, Code 128, Code 39, EAN, UPC
 - **Multiple barcode types**: EA (Each), DSP (Display Pack), CS (Case/Carton)
-- **CSV-based product database** with automatic loading from `/public/milk_powder_list_csv.csv`
+- **CSV-based product database** with automatic loading from `/public/product_list_csv.csv`
 - **Employee authentication** with branch and session management
 - **Inventory tracking** with history logging
 
@@ -50,13 +50,13 @@ python(3) app.py
 ```
 ├── src/
 │   ├── app/api/detect-barcode/    # Barcode detection API
-│   ├── components/headers/        # Header components
+│   ├── components/                # Components
 │   ├── hooks/                     # React hooks
 │   └── types/                     # TypeScript definitions
 ├── backend/
 │   ├── app.py                     # Flask application
 │   └── requirements.txt           # Python dependencies
-├── public/milk_powder_list_csv.csv # Product database
+├── public/product_list_csv.csv    # Product database
 ├── docker-compose.yml             # Container setup
 └── Dockerfile                     # Frontend container
 ```
@@ -89,7 +89,7 @@ PYTHONUNBUFFERED=1
 
 ### Product Data
 
-Place CSV file at `/public/milk_powder_list_csv.csv` with format:
+Place CSV file at `/public/product_list_csv.csv` with format:
 Material, Description, Thai Desc., Pack Size, Product Group, Bar Code EA/DSP/CS
 
 ## License

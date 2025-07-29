@@ -1,3 +1,13 @@
+// src/types/detection.ts
+// 🎯 Detection-specific types only (Camera types moved to src/types/camera.ts)
+
+import React from "react";
+import type { VideoConstraints } from "./camera";
+
+// =========================================
+// 📊 Detection Stats & Performance
+// =========================================
+
 export interface Stats {
   rotation: number;
   method: string;
@@ -15,11 +25,9 @@ export interface Detection {
   class: number;
 }
 
-export interface VideoConstraints {
-  width: { ideal: number };
-  height: { ideal: number };
-  facingMode: "environment" | "user";
-}
+// =========================================
+// 🔍 Barcode Detection Types
+// =========================================
 
 export interface BarcodeData {
   data: string;
@@ -63,17 +71,9 @@ export interface APIResponse {
   }>;
 }
 
-// Additional utility types
-export type CameraFacing = "environment" | "user";
-
-export interface CameraState {
-  isStreaming: boolean;
-  facingMode: CameraFacing;
-  resolution: {
-    width: number;
-    height: number;
-  };
-}
+// =========================================
+// 🔄 Processing State Types
+// =========================================
 
 export interface ProcessingState {
   isProcessing: boolean;
@@ -90,24 +90,25 @@ export interface DetectionResult {
   error?: string;
 }
 
-// Error types for better error handling
-export interface CameraError extends Error {
-  name:
-    | "NotAllowedError"
-    | "NotFoundError"
-    | "NotReadableError"
-    | "OverconstrainedError"
-    | "SecurityError"
-    | "TypeError"
-    | "AbortError";
-}
+// =========================================
+// 🚨 Detection-specific Error Types
+// =========================================
 
 export interface ApiError extends Error {
   status?: number;
   code?: string;
 }
 
-// Hook return type for better type safety
+// =========================================
+// 🪝 Detection Hook Props & Return Types
+// =========================================
+
+export interface UseDetectionProcessorProps {
+  videoRef: React.RefObject<HTMLVideoElement>;
+  lastDetectedCode: string;
+  updateBarcode: (barcode: string) => Promise<void>;
+}
+
 export interface UseBarcodeDetectionReturn {
   // Refs
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -118,7 +119,6 @@ export interface UseBarcodeDetectionReturn {
   isStreaming: boolean;
   detections: Detection[];
   processingQueue: number;
-  lastDetectedCode: string;
   stats: Stats;
   errors: string | null;
   videoConstraints: VideoConstraints;
@@ -132,3 +132,50 @@ export interface UseBarcodeDetectionReturn {
   updateCanvasSize: () => void;
   clearError: () => void;
 }
+
+export interface UseDetectionProcessorReturn {
+  // State
+  detections: Detection[];
+  processingQueue: number;
+  lastDetectedCode: string;
+  stats: Stats;
+  isProcessing: boolean;
+
+  // Actions
+  captureAndProcess: () => Promise<void>;
+  resetDetections: () => void;
+  updateStats: (newStats: Partial<Stats>) => void;
+}
+
+// =========================================
+// ⚙️ Detection Configuration Types
+// =========================================
+
+export interface DetectionConfig {
+  autoProcess: boolean;
+  processInterval: number;
+  maxQueue: number;
+  enableDebouncing: boolean;
+  debounceDelay: number;
+  confidenceThreshold: number;
+  enableRotationCorrection: boolean;
+}
+
+export interface DetectionArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+// =========================================
+// 🎯 Re-export Camera Types for Convenience
+// =========================================
+
+// Re-export camera types that are commonly used with detection
+export type {
+  VideoConstraints,
+  CameraFacing,
+  CameraState,
+  CameraError,
+} from "./camera";

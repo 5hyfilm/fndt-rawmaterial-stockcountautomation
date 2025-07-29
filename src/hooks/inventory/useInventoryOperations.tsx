@@ -1,4 +1,4 @@
-// Path: src/hooks/inventory/useInventoryOperations.tsx - Fixed with QuantityDetail Support
+// Path: src/hooks/inventory/useInventoryOperations.tsx - Cleaned Version (No Legacy Code)
 "use client";
 
 import { useCallback } from "react";
@@ -10,7 +10,7 @@ import {
   MultiUnitQuantities,
   getTotalQuantityAllUnits,
   isQuantityDetail,
-} from "./types";
+} from "../../types/inventory";
 
 interface UseInventoryOperationsProps {
   inventory: InventoryItem[];
@@ -30,7 +30,7 @@ export const useInventoryOperations = ({
     return product.name || product.barcode || `MAT_${Date.now()}`;
   }, []);
 
-  // ✅ Find item by material code (ใหม่ - สำคัญ!)
+  // ✅ Find item by material code (หลัก)
   const findItemByMaterialCode = useCallback(
     (materialCode: string): InventoryItem | undefined => {
       return inventory.find((item) => item.materialCode === materialCode);
@@ -38,7 +38,7 @@ export const useInventoryOperations = ({
     [inventory]
   );
 
-  // ✅ Find item by barcode (เก่า - เก็บไว้เพื่อ compatibility)
+  // ✅ Find item by barcode (รองรับ multi-barcode)
   const findItemByBarcode = useCallback(
     (barcode: string): InventoryItem | undefined => {
       return inventory.find(
@@ -52,7 +52,7 @@ export const useInventoryOperations = ({
     [inventory]
   );
 
-  // ✅ FIXED: Add or update multi-unit item with QuantityDetail support
+  // ✅ Add or update multi-unit item with QuantityDetail support
   const addOrUpdateMultiUnitItem = useCallback(
     (
       product: Product,
@@ -63,7 +63,7 @@ export const useInventoryOperations = ({
       try {
         setError(null);
 
-        // ✅ FIXED: Parse quantity input with QuantityDetail support
+        // ✅ Parse quantity input with QuantityDetail support
         let quantities: MultiUnitQuantities = {};
 
         if (typeof quantityInput === "number") {
@@ -91,7 +91,7 @@ export const useInventoryOperations = ({
             );
           }
         } else if (isQuantityDetail(quantityInput)) {
-          // ✅ NEW: QuantityDetail input - รองรับครบ 3 หน่วย
+          // ✅ QuantityDetail input - รองรับครบ 3 หน่วย
           const quantityDetail = quantityInput as QuantityDetail;
           quantities = {
             cs: quantityDetail.cs,
@@ -129,15 +129,15 @@ export const useInventoryOperations = ({
         );
         console.log("📦 New quantities to add:", quantities);
 
-        // Find existing item by material code
-        const existingItem = findItemByMaterialCode(materialCode);
+        // ✅ Check if item already exists
+        const existingItemIndex = inventory.findIndex(
+          (item) => item.materialCode === materialCode
+        );
 
-        if (existingItem) {
-          // ✅ UPDATE: เพิ่มจำนวนเข้ากับรายการเดิม
-          console.log("📦 Found existing item, updating quantities:", {
-            current: existingItem.quantities,
-            adding: quantities,
-          });
+        if (existingItemIndex !== -1) {
+          // ✅ Update existing item
+          const existingItem = inventory[existingItemIndex];
+          console.log("📝 Updating existing item:", existingItem.productName);
 
           const updatedQuantities: MultiUnitQuantities = {
             cs: (existingItem.quantities.cs || 0) + (quantities.cs || 0),
@@ -145,82 +145,60 @@ export const useInventoryOperations = ({
             ea: (existingItem.quantities.ea || 0) + (quantities.ea || 0),
           };
 
-          // ลบหน่วยที่เป็น 0 ออก
+          // Remove zero quantities
           if (updatedQuantities.cs === 0) delete updatedQuantities.cs;
           if (updatedQuantities.dsp === 0) delete updatedQuantities.dsp;
           if (updatedQuantities.ea === 0) delete updatedQuantities.ea;
 
-          // อัปเดต scanned barcodes
-          const updatedScannedBarcodes = {
-            ...existingItem.scannedBarcodes,
-          };
-
-          // เพิ่มบาร์โค้ดใหม่สำหรับหน่วยที่มีการเพิ่ม
-          Object.keys(quantities).forEach((unit) => {
-            if (quantities[unit as keyof MultiUnitQuantities]! > 0) {
-              updatedScannedBarcodes[
-                unit as keyof typeof updatedScannedBarcodes
-              ] = product.barcode;
-            }
-          });
-
           const updatedItem: InventoryItem = {
             ...existingItem,
             quantities: updatedQuantities,
-            quantity: Object.values(updatedQuantities).reduce(
-              (sum, qty) => sum + (qty || 0),
-              0
-            ),
-            scannedBarcodes: updatedScannedBarcodes,
+            quantity: getTotalQuantityAllUnits({
+              ...existingItem,
+              quantities: updatedQuantities,
+            }),
             lastUpdated: new Date().toISOString(),
-            // อัปเดต product group ถ้ามี
-            productGroup: directProductGroup || existingItem.productGroup,
+            scannedBarcodes: {
+              ...existingItem.scannedBarcodes,
+              [barcodeType]: product.barcode,
+            },
           };
 
-          const updatedInventory = inventory.map((item) =>
-            item.id === existingItem.id ? updatedItem : item
-          );
+          const newInventory = [...inventory];
+          newInventory[existingItemIndex] = updatedItem;
+          setInventory(newInventory);
+          saveInventory(newInventory);
 
-          console.log("✅ Updated existing item:", updatedItem);
-          setInventory(updatedInventory);
-          return saveInventory(updatedInventory);
+          console.log("✅ Updated item:", updatedItem.productName);
+          return true;
         } else {
-          // ✅ CREATE: สร้างรายการใหม่
-          console.log("🆕 Creating new item with materialCode:", materialCode);
-
-          // สร้าง scannedBarcodes สำหรับหน่วยที่มีจำนวน
-          const scannedBarcodes: { cs?: string; dsp?: string; ea?: string } =
-            {};
-          Object.keys(quantities).forEach((unit) => {
-            if (quantities[unit as keyof MultiUnitQuantities]! > 0) {
-              scannedBarcodes[unit as keyof typeof scannedBarcodes] =
-                product.barcode;
-            }
-          });
-
+          // ✅ Add new item
           const newItem: InventoryItem = {
-            id: `inv_${materialCode}_${Date.now()}`,
+            id: `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             materialCode,
-            productName: product.name || "ไม่ระบุชื่อ",
-            brand: product.brand || "ไม่ระบุแบรนด์",
-            category: product.category || "ไม่ระบุ",
-            size: product.size?.toString() || "",
-            unit: product.unit || "",
-            barcode: product.barcode, // บาร์โค้ดหลัก
-            quantity: totalQuantity, // จำนวนรวม
+            productName: product.name || `Product ${product.barcode}`,
+            brand: product.brand || "Unknown",
+            category: product.category || "Unknown",
+            size: product.size || "",
+            unit: product.unit || "EA",
+            barcode: product.barcode,
             quantities,
+            quantity: getTotalQuantityAllUnits({ quantities } as InventoryItem),
             lastUpdated: new Date().toISOString(),
             productData: product,
-            productGroup: directProductGroup || product.category,
-            thaiDescription: product.name,
-            scannedBarcodes,
+            productGroup: directProductGroup || "",
+            thaiDescription: product.description || "",
+            scannedBarcodes: {
+              [barcodeType]: product.barcode,
+            },
           };
 
-          const updatedInventory = [...inventory, newItem];
+          const newInventory = [...inventory, newItem];
+          setInventory(newInventory);
+          saveInventory(newInventory);
 
-          console.log("✅ Created new item:", newItem);
-          setInventory(updatedInventory);
-          return saveInventory(updatedInventory);
+          console.log("✅ Added new item:", newItem.productName);
+          return true;
         }
       } catch (error) {
         console.error("❌ Error in addOrUpdateMultiUnitItem:", error);
@@ -228,17 +206,10 @@ export const useInventoryOperations = ({
         return false;
       }
     },
-    [
-      inventory,
-      setInventory,
-      saveInventory,
-      setError,
-      generateMaterialCode,
-      findItemByMaterialCode,
-    ]
+    [inventory, setInventory, saveInventory, setError, generateMaterialCode]
   );
 
-  // ✅ NEW: Update specific unit quantity
+  // ✅ Update specific unit quantity
   const updateUnitQuantity = useCallback(
     (
       materialCode: string,
@@ -249,160 +220,163 @@ export const useInventoryOperations = ({
         setError(null);
 
         if (newQuantity < 0) {
-          setError("จำนวนสินค้าต้องไม่เป็นค่าลบ");
+          setError("จำนวนสินค้าต้องไม่ติดลบ");
           return false;
         }
 
-        const existingItem = findItemByMaterialCode(materialCode);
-        if (!existingItem) {
-          setError("ไม่พบรายการสินค้า");
+        const itemIndex = inventory.findIndex(
+          (item) => item.materialCode === materialCode
+        );
+
+        if (itemIndex === -1) {
+          setError("ไม่พบรายการสินค้าที่ต้องการแก้ไข");
           return false;
         }
 
-        const updatedQuantities: MultiUnitQuantities = {
-          ...existingItem.quantities,
-          [unit]: newQuantity,
-        };
+        const item = inventory[itemIndex];
+        const updatedQuantities = { ...item.quantities };
 
-        // ถ้าจำนวนเป็น 0 ให้ลบ unit นั้นออก
         if (newQuantity === 0) {
           delete updatedQuantities[unit];
+        } else {
+          updatedQuantities[unit] = newQuantity;
         }
 
         const updatedItem: InventoryItem = {
-          ...existingItem,
+          ...item,
           quantities: updatedQuantities,
           quantity: getTotalQuantityAllUnits({
-            ...existingItem,
+            ...item,
             quantities: updatedQuantities,
           }),
           lastUpdated: new Date().toISOString(),
         };
 
-        const updatedInventory = inventory.map((item) =>
-          item.materialCode === materialCode ? updatedItem : item
-        );
+        const newInventory = [...inventory];
+        newInventory[itemIndex] = updatedItem;
+        setInventory(newInventory);
+        saveInventory(newInventory);
 
-        console.log(
-          `✅ Updated ${unit} quantity for ${materialCode}:`,
-          newQuantity
-        );
-        setInventory(updatedInventory);
-        return saveInventory(updatedInventory);
+        console.log(`✅ Updated ${unit} quantity for:`, item.productName);
+        return true;
       } catch (error) {
         console.error("❌ Error updating unit quantity:", error);
-        setError("เกิดข้อผิดพลาดในการอัพเดทจำนวน");
-        return false;
-      }
-    },
-    [inventory, setInventory, saveInventory, setError, findItemByMaterialCode]
-  );
-
-  // ✅ LEGACY: รองรับ API เก่า (จะค่อย ๆ เอาออก)
-  const addOrUpdateItem = useCallback(
-    (
-      product: Product,
-      quantityInput: number | QuantityDetail,
-      barcodeType: "cs" | "dsp" | "ea" = "ea",
-      directProductGroup?: string
-    ): boolean => {
-      console.log(
-        "⚠️ Using legacy addOrUpdateItem, consider migrating to addOrUpdateMultiUnitItem"
-      );
-      return addOrUpdateMultiUnitItem(
-        product,
-        quantityInput,
-        barcodeType,
-        directProductGroup
-      );
-    },
-    [addOrUpdateMultiUnitItem]
-  );
-
-  // ✅ LEGACY: Update item quantity (จะค่อย ๆ เอาออก)
-  const updateItemQuantity = useCallback(
-    (itemId: string, newQuantity: number): boolean => {
-      try {
-        console.log(
-          "⚠️ Using legacy updateItemQuantity, consider using updateUnitQuantity"
-        );
-
-        const existingItem = inventory.find((item) => item.id === itemId);
-        if (!existingItem) {
-          setError("ไม่พบรายการสินค้า");
-          return false;
-        }
-
-        // สำหรับ legacy, อัปเดตใน unit หลักที่มีข้อมูล
-        const activeUnits = Object.keys(existingItem.quantities) as Array<
-          "cs" | "dsp" | "ea"
-        >;
-        if (activeUnits.length === 0) return false;
-
-        const primaryUnit = activeUnits[0]; // ใช้ unit แรกที่พบ
-        return updateUnitQuantity(
-          existingItem.materialCode,
-          primaryUnit,
-          newQuantity
-        );
-      } catch (error) {
-        console.error("❌ Error in legacy updateItemQuantity:", error);
-        setError("เกิดข้อผิดพลาดในการอัพเดทจำนวน");
-        return false;
-      }
-    },
-    [inventory, updateUnitQuantity, setError]
-  );
-
-  // ✅ Remove item (ไม่เปลี่ยน)
-  const removeItem = useCallback(
-    (itemId: string): boolean => {
-      try {
-        setError(null);
-        const updatedInventory = inventory.filter((item) => item.id !== itemId);
-        setInventory(updatedInventory);
-        return saveInventory(updatedInventory);
-      } catch (error) {
-        console.error("❌ Error removing item:", error);
-        setError("เกิดข้อผิดพลาดในการลบรายการ");
+        setError("เกิดข้อผิดพลาดในการแก้ไขจำนวนสินค้า");
         return false;
       }
     },
     [inventory, setInventory, saveInventory, setError]
   );
 
-  // ✅ Search items (อัปเดตให้ค้นหาทั้ง materialCode)
+  // ✅ Update item quantity detail
+  const updateItemQuantityDetail = useCallback(
+    (materialCode: string, quantityDetail: QuantityDetail): boolean => {
+      try {
+        setError(null);
+
+        const itemIndex = inventory.findIndex(
+          (item) => item.materialCode === materialCode
+        );
+
+        if (itemIndex === -1) {
+          setError("ไม่พบรายการสินค้าที่ต้องการแก้ไข");
+          return false;
+        }
+
+        const item = inventory[itemIndex];
+        const updatedQuantities: MultiUnitQuantities = {
+          cs: quantityDetail.cs || 0,
+          dsp: quantityDetail.dsp || 0,
+          ea: quantityDetail.ea || 0,
+        };
+
+        // Remove zero quantities
+        if (updatedQuantities.cs === 0) delete updatedQuantities.cs;
+        if (updatedQuantities.dsp === 0) delete updatedQuantities.dsp;
+        if (updatedQuantities.ea === 0) delete updatedQuantities.ea;
+
+        const updatedItem: InventoryItem = {
+          ...item,
+          quantities: updatedQuantities,
+          quantityDetail: {
+            ...quantityDetail,
+            lastModified: new Date().toISOString(),
+          },
+          quantity: getTotalQuantityAllUnits({
+            ...item,
+            quantities: updatedQuantities,
+          }),
+          lastUpdated: new Date().toISOString(),
+        };
+
+        const newInventory = [...inventory];
+        newInventory[itemIndex] = updatedItem;
+        setInventory(newInventory);
+        saveInventory(newInventory);
+
+        console.log("✅ Updated quantity detail for:", item.productName);
+        return true;
+      } catch (error) {
+        console.error("❌ Error updating quantity detail:", error);
+        setError("เกิดข้อผิดพลาดในการแก้ไขรายละเอียดจำนวนสินค้า");
+        return false;
+      }
+    },
+    [inventory, setInventory, saveInventory, setError]
+  );
+
+  // ✅ Remove item from inventory
+  const removeItem = useCallback(
+    (itemId: string): boolean => {
+      try {
+        setError(null);
+
+        const newInventory = inventory.filter((item) => item.id !== itemId);
+        setInventory(newInventory);
+        saveInventory(newInventory);
+
+        console.log("✅ Removed item:", itemId);
+        return true;
+      } catch (error) {
+        console.error("❌ Error removing item:", error);
+        setError("เกิดข้อผิดพลาดในการลบรายการสินค้า");
+        return false;
+      }
+    },
+    [inventory, setInventory, saveInventory, setError]
+  );
+
+  // ✅ Search items
   const searchItems = useCallback(
     (searchTerm: string): InventoryItem[] => {
-      const term = searchTerm.toLowerCase().trim();
-      if (!term) return inventory;
+      if (!searchTerm.trim()) return inventory;
 
+      const term = searchTerm.toLowerCase().trim();
       return inventory.filter(
         (item) =>
           item.productName.toLowerCase().includes(term) ||
+          item.materialCode.toLowerCase().includes(term) ||
           item.brand.toLowerCase().includes(term) ||
           item.barcode.includes(term) ||
-          item.materialCode.toLowerCase().includes(term) ||
-          (item.thaiDescription &&
-            item.thaiDescription.toLowerCase().includes(term))
+          item.category.toLowerCase().includes(term)
       );
     },
     [inventory]
   );
 
   return {
-    // ✅ NEW: Multi-unit operations
+    // Core operations
     addOrUpdateMultiUnitItem,
     updateUnitQuantity,
-    findItemByMaterialCode,
-
-    // ✅ LEGACY: Backward compatibility
-    addOrUpdateItem,
-    updateItemQuantity,
-    findItemByBarcode,
-
-    // ✅ Core operations
+    updateItemQuantityDetail,
     removeItem,
     searchItems,
+
+    // Finder methods
+    findItemByMaterialCode,
+    findItemByBarcode,
+
+    // Utilities
+    generateMaterialCode,
   };
 };

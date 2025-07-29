@@ -14,7 +14,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/milk_powder_list_csv.csv",
+        source: "/product_list_csv.csv",
         headers: [
           {
             key: "Content-Type",

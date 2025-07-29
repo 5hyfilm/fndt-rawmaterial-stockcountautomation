@@ -1,23 +1,11 @@
-// src/hooks/useEmployeeAuth.tsx
+// Path: src/hooks/useEmployeeAuth.tsx
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-
-export interface EmployeeInfo {
-  employeeName: string;
-  branchCode: string;
-  branchName: string;
-  timestamp: string;
-}
-
-export interface EmployeeSession {
-  employee: EmployeeInfo;
-  sessionId: string;
-  loginTime: string;
-}
+import { Employee, EmployeeFormData, EmployeeSession } from "@/types/auth";
 
 const STORAGE_KEY = "fn_employee_session";
-const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+const SESSION_DURATION = 3 * 60 * 60 * 1000; // 8 hours in milliseconds
 
 export const useEmployeeAuth = () => {
   const [session, setSession] = useState<EmployeeSession | null>(null);
@@ -38,7 +26,7 @@ export const useEmployeeAuth = () => {
           setSession(parsedSession);
           console.log(
             "📋 Existing session loaded:",
-            parsedSession.employee.employeeName
+            parsedSession.employee.name
           );
         } else {
           // Session หมดอายุ
@@ -55,9 +43,16 @@ export const useEmployeeAuth = () => {
   }, []);
 
   // สร้าง session ใหม่
-  const login = useCallback((employeeInfo: EmployeeInfo) => {
+  const login = useCallback((employeeData: EmployeeFormData) => {
+    const employee: Employee = {
+      name: employeeData.name,
+      branchCode: employeeData.branchCode,
+      branchName: employeeData.branchName,
+      timestamp: new Date().toISOString(),
+    };
+
     const newSession: EmployeeSession = {
-      employee: employeeInfo,
+      employee,
       sessionId: `session_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`,
@@ -67,7 +62,7 @@ export const useEmployeeAuth = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newSession));
       setSession(newSession);
-      console.log("✅ Employee session created:", employeeInfo.employeeName);
+      console.log("✅ Employee session created:", employee.name);
     } catch (error) {
       console.error("❌ Error saving session:", error);
       throw new Error("ไม่สามารถบันทึกข้อมูลการเข้าสู่ระบบได้");
@@ -116,10 +111,7 @@ export const useEmployeeAuth = () => {
   const logout = useCallback(() => {
     try {
       // Log ข้อมูลก่อน logout สำหรับ debugging
-      console.log(
-        "👋 Starting logout process for:",
-        session?.employee.employeeName
-      );
+      console.log("👋 Starting logout process for:", session?.employee.name);
 
       // Clear localStorage ทั้งหมด
       const clearSuccess = clearAllLocalStorage();
@@ -152,7 +144,7 @@ export const useEmployeeAuth = () => {
 
   // อัพเดตข้อมูลพนักงาน
   const updateEmployeeInfo = useCallback(
-    (updatedInfo: Partial<EmployeeInfo>) => {
+    (updatedInfo: Partial<Employee>) => {
       if (!session) return;
 
       const updatedSession: EmployeeSession = {
@@ -190,7 +182,7 @@ export const useEmployeeAuth = () => {
     if (!session) return null;
 
     return {
-      employeeName: session.employee.employeeName,
+      employeeName: session.employee.name, // ✅ Map name → employeeName for backward compatibility
       branchCode: session.employee.branchCode,
       branchName: session.employee.branchName,
       sessionId: session.sessionId,
@@ -253,7 +245,7 @@ export const useEmployeeAuth = () => {
 
     // Employee info shortcuts
     employee: session?.employee || null,
-    employeeName: session?.employee.employeeName || "",
+    employeeName: session?.employee.name || "", // ✅ Map name → employeeName
     branchCode: session?.employee.branchCode || "",
     branchName: session?.employee.branchName || "",
 

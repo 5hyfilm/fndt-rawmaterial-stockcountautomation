@@ -1,7 +1,6 @@
 # Path: /backend/app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-# ✅ เปลี่ยนจาก torch เป็น onnxruntime
 import onnxruntime as ort
 import cv2
 import numpy as np
@@ -13,15 +12,15 @@ from PIL import Image
 import base64
 
 app = Flask(__name__)
-CORS(app)  # เปิดใช้ CORS สำหรับ frontend
+CORS(app)
 
-# ✅ โหลดโมเดล ONNX แทน PyTorch
+# Security Configuration
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'bmp'}
+
 try:
-    # Setup ONNX Runtime providers (GPU first, then CPU fallback)
     providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
     session = ort.InferenceSession('model.onnx', providers=providers)
     
-    # Get model input details
     input_name = session.get_inputs()[0].name
     input_shape = session.get_inputs()[0].shape
     
@@ -33,63 +32,37 @@ except Exception as e:
     print(f"⚠️ ไม่สามารถโหลดโมเดล ONNX ได้: {e}")
     session = None
 
-# ✅ เพิ่มฟังก์ชันสำหรับ ONNX preprocessing และ postprocessing
 def preprocess_frame(frame):
-    """
-    เตรียม input สำหรับ ONNX model
-    """
-    # Resize เป็น 640x640 (YOLO input size)
     img = cv2.resize(frame, (640, 640))
-    
-    # แปลงจาก BGR เป็น RGB
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    
-    # Normalize เป็น 0-1
     img = img.astype(np.float32) / 255.0
-    
-    # เปลี่ยน format จาก HWC เป็น CHW และเพิ่ม batch dimension
-    img = img.transpose(2, 0, 1)  # HWC -> CHW
-    img = np.expand_dims(img, axis=0)  # เพิ่ม batch dimension
-    
+    img = img.transpose(2, 0, 1)
+    img = np.expand_dims(img, axis=0)
     return img
 
 def postprocess_outputs(outputs, original_shape, conf_threshold=0.5, nms_threshold=0.4):
-    """
-    แปลง ONNX outputs กลับเป็น detection format
-    """
-    detections = outputs[0]  # Shape: (1, 25200, 85) for YOLO
-    
-    # Get original dimensions
+    detections = outputs[0]
     orig_h, orig_w = original_shape[:2]
-    
-    # Scale factors
     scale_x = orig_w / 640
     scale_y = orig_h / 640
-    
     detection_results = []
     
-    # Process detections
-    for detection in detections[0]:  # Remove batch dimension
-        # YOLO format: [x_center, y_center, width, height, confidence, class_scores...]
+    for detection in detections[0]:
         confidence = detection[4]
         
         if confidence > conf_threshold:
-            # Get bounding box
             x_center, y_center, width, height = detection[:4]
             
-            # Convert to corner coordinates
             x1 = int((x_center - width/2) * scale_x)
             y1 = int((y_center - height/2) * scale_y)
             x2 = int((x_center + width/2) * scale_x)
             y2 = int((y_center + height/2) * scale_y)
             
-            # Ensure coordinates are within image bounds
             x1 = max(0, min(x1, orig_w))
             y1 = max(0, min(y1, orig_h))
             x2 = max(0, min(x2, orig_w))
             y2 = max(0, min(y2, orig_h))
             
-            # Get class with highest score
             class_scores = detection[5:]
             class_id = np.argmax(class_scores)
             
@@ -105,12 +78,7 @@ def postprocess_outputs(outputs, original_shape, conf_threshold=0.5, nms_thresho
     
     return detection_results
 
-# ✅ ส่วนที่เหลือใช้เหมือนเดิม (ไม่ต้องแก้) - Advanced Barcode Detection Functions
-
 def detect_line_segments(image):
-    """
-    Detect line segments using LSD algorithm (Stage 1.2 from paper)
-    """
     if len(image.shape) == 3:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
@@ -125,9 +93,6 @@ def detect_line_segments(image):
     return lines
 
 def calculate_line_angles_and_lengths(lines):
-    """
-    Calculate angles and lengths of line segments
-    """
     if lines is None or len(lines) == 0:
         return [], []
     
@@ -148,9 +113,6 @@ def calculate_line_angles_and_lengths(lines):
     return angles, lengths
 
 def predict_rotation_angle(angles, lengths, angle_tolerance=5):
-    """
-    Predict rotation angle by clustering line angles
-    """
     if not angles or not lengths:
         return 0
     
@@ -167,9 +129,6 @@ def predict_rotation_angle(angles, lengths, angle_tolerance=5):
     return 0
 
 def rotate_image(image, angle):
-    """
-    Rotate image by given angle
-    """
     if angle == 0:
         return image
     
@@ -183,9 +142,6 @@ def rotate_image(image, angle):
     return rotated
 
 def filter_lines_by_angle(lines, target_angle, angle_tolerance=10, min_length=10):
-    """
-    Filter line segments based on target angle and minimum length
-    """
     if lines is None or len(lines) == 0:
         return []
     
@@ -213,9 +169,6 @@ def filter_lines_by_angle(lines, target_angle, angle_tolerance=10, min_length=10
     return filtered_lines
 
 def create_convex_hull_mask(image_shape, lines):
-    """
-    Create mask from convex hull of line segment endpoints
-    """
     if not lines:
         return np.zeros(image_shape[:2], dtype=np.uint8)
     
@@ -236,9 +189,6 @@ def create_convex_hull_mask(image_shape, lines):
     return mask
 
 def preprocess_for_decoding(image):
-    """
-    Advanced preprocessing to improve barcode readability
-    """
     if len(image.shape) == 3:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
@@ -246,30 +196,24 @@ def preprocess_for_decoding(image):
     
     processed_images = []
     
-    # Method 1: Original grayscale
     processed_images.append(("original", gray))
     
-    # Method 2: Gaussian blur + threshold
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
     _, thresh1 = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     processed_images.append(("otsu", thresh1))
     
-    # Method 3: Adaptive threshold
     adaptive = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
                                    cv2.THRESH_BINARY, 11, 2)
     processed_images.append(("adaptive", adaptive))
     
-    # Method 4: Morphological operations
     kernel = np.ones((2,2), np.uint8)
     morph = cv2.morphologyEx(thresh1, cv2.MORPH_CLOSE, kernel)
     processed_images.append(("morph", morph))
     
-    # Method 5: Histogram equalization
     equalized = cv2.equalizeHist(gray)
     _, thresh_eq = cv2.threshold(equalized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     processed_images.append(("equalized", thresh_eq))
     
-    # Method 6: Contrast enhancement
     enhanced = cv2.convertScaleAbs(gray, alpha=1.5, beta=30)
     _, thresh_enh = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     processed_images.append(("enhanced", thresh_enh))
@@ -277,9 +221,6 @@ def preprocess_for_decoding(image):
     return processed_images
 
 def try_multiple_decoding_methods(image):
-    """
-    Try multiple preprocessing methods for better decoding
-    """
     processed_images = preprocess_for_decoding(image)
     
     for method_name, processed_img in processed_images:
@@ -303,12 +244,8 @@ def try_multiple_decoding_methods(image):
     return [], None, "failed"
 
 def enhanced_barcode_detection(cropped_img):
-    """
-    Enhanced barcode detection following the paper's methodology
-    """
     original_height, original_width = cropped_img.shape[:2]
     
-    # Resize if too small
     if original_width < 100:
         scale_factor = 100 / original_width
         new_width = int(original_width * scale_factor)
@@ -317,12 +254,10 @@ def enhanced_barcode_detection(cropped_img):
                                interpolation=cv2.INTER_CUBIC)
         print(f"🔍 Upscaled image: {original_width}x{original_height} -> {new_width}x{new_height}")
     
-    # Try multiple decoding methods first
     barcodes, best_img, method = try_multiple_decoding_methods(cropped_img)
     if barcodes:
         return barcodes, best_img, 0, [], method
     
-    # Stage 1.2: Line Segment Detection
     lines = detect_line_segments(cropped_img)
     
     if lines is None or len(lines) == 0:
@@ -333,14 +268,12 @@ def enhanced_barcode_detection(cropped_img):
     rotation_angle = predict_rotation_angle(angles, lengths)
     print(f"🔄 Detected rotation angle: {rotation_angle}°")
     
-    # Stage 2.1: Rotate image
     rotated_img = rotate_image(cropped_img, rotation_angle)
     
     barcodes, best_img, method = try_multiple_decoding_methods(rotated_img)
     if barcodes:
         return barcodes, best_img, rotation_angle, [], f"rotated_{method}"
     
-    # Stage 2.2: Filter lines and create region
     rotated_lines = detect_line_segments(rotated_img)
     
     if rotated_lines is not None:
@@ -362,9 +295,6 @@ def enhanced_barcode_detection(cropped_img):
     return [], gray, rotation_angle, [], "no_decode"
 
 def process_detections(frame):
-    """
-    ✅ ประมวลผล frame ผ่าน ONNX model และตรวจหา barcodes
-    """
     if session is None:
         return {
             'success': False,
@@ -372,26 +302,19 @@ def process_detections(frame):
         }
     
     try:
-        # ✅ Preprocess input สำหรับ ONNX
         input_tensor = preprocess_frame(frame)
-        
-        # ✅ รัน ONNX inference
         outputs = session.run(None, {input_name: input_tensor})
-        
-        # ✅ Postprocess outputs
         detections = postprocess_outputs(outputs, frame.shape)
         
         detection_results = []
         barcode_results = []
         
-        # ประมวลผล detections แต่ละตัว
         for detection in detections:
             x1, y1, x2, y2 = detection['xmin'], detection['ymin'], detection['xmax'], detection['ymax']
             confidence = detection['confidence']
             
             detection_results.append(detection)
             
-            # Crop และวิเคราะห์ barcode
             cropped_img = frame[y1:y2, x1:x2]
             
             if cropped_img.size > 0:
@@ -426,10 +349,12 @@ def process_detections(frame):
             'error': str(e)
         }
 
+def is_allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/api/detect-barcode', methods=['POST'])
 def detect_barcode():
     try:
-        # ตรวจสอบว่ามีไฟล์รูปภาพหรือไม่
         if 'image' not in request.files:
             return jsonify({
                 'success': False,
@@ -444,10 +369,14 @@ def detect_barcode():
                 'error': 'ไม่ได้เลือกไฟล์'
             }), 400
         
-        # อ่านรูปภาพ
+        if not is_allowed_file(file.filename):
+            return jsonify({
+                'success': False,
+                'error': 'ประเภทไฟล์ไม่ถูกต้อง อนุญาตเฉพาะ JPG, PNG, BMP เท่านั้น'
+            }), 400
+        
         image_bytes = file.read()
         
-        # แปลงเป็น numpy array
         nparr = np.frombuffer(image_bytes, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
@@ -457,7 +386,6 @@ def detect_barcode():
                 'error': 'ไม่สามารถอ่านไฟล์รูปภาพได้'
             }), 400
         
-        # ประมวลผล
         result = process_detections(frame)
         
         return jsonify(result)
@@ -471,7 +399,6 @@ def detect_barcode():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """✅ อัพเดท Health check endpoint สำหรับ ONNX"""
     return jsonify({
         'status': 'healthy',
         'model_loaded': session is not None,

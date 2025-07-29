@@ -1,8 +1,8 @@
-// ./src/hooks/inventory/useInventoryStorage.tsx
+// Path: src/hooks/inventory/useInventoryStorage.tsx
 "use client";
 
 import { useState, useCallback } from "react";
-import { InventoryItem, StorageConfig } from "./types";
+import { InventoryItem, StorageConfig } from "../../types/inventory";
 
 const DEFAULT_CONFIG: StorageConfig = {
   storageKey: "fn_inventory_data",
@@ -67,7 +67,7 @@ export const useInventoryStorage = (config: StorageConfig = DEFAULT_CONFIG) => {
         return true;
       } catch (error: unknown) {
         console.error("❌ Error saving inventory:", error);
-        setError("ไม่สามารถบันทึกข้อมูลได้");
+        setError("ไม่สามารถบันทึกข้อมูล inventory ได้");
         return false;
       }
     },
@@ -75,71 +75,55 @@ export const useInventoryStorage = (config: StorageConfig = DEFAULT_CONFIG) => {
   );
 
   // Clear all inventory data
-  const clearStorage = useCallback((): boolean => {
+  const clearInventory = useCallback((): boolean => {
     try {
       localStorage.removeItem(config.storageKey);
       localStorage.removeItem(config.versionKey);
-      console.log("🗑️ Cleared inventory storage");
+      console.log("🗑️ Cleared inventory data");
       return true;
     } catch (error: unknown) {
-      console.error("❌ Error clearing storage:", error);
-      setError("ไม่สามารถลบข้อมูลได้");
+      console.error("❌ Error clearing inventory:", error);
+      setError("ไม่สามารถลบข้อมูล inventory ได้");
       return false;
     }
   }, [config]);
 
-  // Get storage info
-  const getStorageInfo = useCallback(() => {
+  // Get storage stats
+  const getStorageStats = useCallback(() => {
     try {
-      const data = localStorage.getItem(config.storageKey);
+      const savedData = localStorage.getItem(config.storageKey);
+      const dataSize = savedData ? new Blob([savedData]).size : 0;
       const version = localStorage.getItem(config.versionKey);
 
       return {
-        hasData: !!data,
-        version: version || "unknown",
-        dataSize: data ? data.length : 0,
-        itemCount: data ? JSON.parse(data).length : 0,
+        hasData: !!savedData,
+        dataSize,
+        version,
+        itemCount: savedData ? JSON.parse(savedData).length : 0,
       };
-    } catch {
+    } catch (error: unknown) {
+      console.error("❌ Error getting storage stats:", error);
       return {
         hasData: false,
-        version: "error",
         dataSize: 0,
+        version: null,
         itemCount: 0,
       };
     }
   }, [config]);
 
-  // Check if storage is available
-  const isStorageAvailable = useCallback((): boolean => {
-    try {
-      const testKey = "__test_storage__";
-      localStorage.setItem(testKey, "test");
-      localStorage.removeItem(testKey);
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  // Clear error
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
   return {
+    // Core operations
+    loadInventory,
+    saveInventory,
+    clearInventory,
+
     // State
     isLoading,
     error,
-
-    // Actions
-    loadInventory,
-    saveInventory,
-    clearStorage,
-    clearError,
+    setError,
 
     // Utilities
-    getStorageInfo,
-    isStorageAvailable,
+    getStorageStats,
   };
 };

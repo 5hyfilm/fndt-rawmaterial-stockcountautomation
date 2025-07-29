@@ -1,4 +1,4 @@
-// src/hooks/inventory/useInventoryValidation.tsx - Phase 2: Enhanced Validation Rules (Fixed)
+// Path: src/hooks/inventory/useInventoryValidation.tsx - Cleaned Version (No Legacy Code)
 "use client";
 
 import { useCallback, useMemo } from "react";
@@ -8,7 +8,7 @@ import {
   QuantityInput,
   isQuantityDetail,
   isSimpleQuantity,
-} from "./types";
+} from "../../types/inventory";
 import { Product } from "../../types/product";
 
 interface ValidationResult {
@@ -141,7 +141,7 @@ export const useInventoryValidation = (
     [rules]
   );
 
-  // ✅ Validate quantity detail (CS/DSP/EA) - แก้ไขให้ใช้ cs, dsp, ea แทน major, remainder
+  // ✅ Validate quantity detail (CS/DSP/EA)
   const validateQuantityDetail = useCallback(
     (quantityDetail: QuantityDetail): ValidationResult => {
       const errors: string[] = [];
@@ -320,7 +320,7 @@ export const useInventoryValidation = (
     [validateSimpleQuantity, validateQuantityDetail]
   );
 
-  // ✅ Validate inventory item duplication
+  // ✅ FIXED: Modern duplication validation (ใช้ materialCode และ quantities)
   const validateDuplication = useCallback(
     (
       product: Product,
@@ -331,29 +331,45 @@ export const useInventoryValidation = (
       const warnings: string[] = [];
       const suggestions: string[] = [];
 
-      // Check for exact duplicate (same barcode + same type)
-      const exactDuplicate = existingInventory.find(
+      const materialCode = product.id || product.barcode;
+
+      // ✅ Check for same material (will be merged by material code)
+      const sameProduct = existingInventory.find(
         (item) =>
-          item.barcode === product.barcode && item.barcodeType === barcodeType
+          item.materialCode === materialCode || item.barcode === product.barcode
       );
 
-      if (exactDuplicate) {
-        warnings.push("พบสินค้าประเภทเดียวกันในระบบแล้ว");
-        suggestions.push("จำนวนจะถูกรวมเข้ากับข้อมูลเดิม");
-      }
+      if (sameProduct) {
+        warnings.push("พบสินค้าเดียวกันในระบบแล้ว");
 
-      // Check for same product with different barcode types
-      const sameProductDifferentType = existingInventory.filter(
-        (item) =>
-          item.barcode === product.barcode && item.barcodeType !== barcodeType
-      );
+        // ✅ Check if the unit already has quantity
+        const currentUnitQuantity = sameProduct.quantities[barcodeType] || 0;
 
-      if (sameProductDifferentType.length > 0) {
-        const otherTypes = sameProductDifferentType
-          .map((item) => item.barcodeType)
-          .join(", ");
-        warnings.push(`พบสินค้าเดียวกันในประเภทอื่น: ${otherTypes}`);
-        suggestions.push("ตรวจสอบว่าต้องการเพิ่มในประเภทนี้จริงหรือไม่");
+        if (currentUnitQuantity > 0) {
+          warnings.push(
+            `หน่วย ${barcodeType.toUpperCase()} มีจำนวน ${currentUnitQuantity} อยู่แล้ว`
+          );
+          suggestions.push("จำนวนใหม่จะถูกรวมเข้ากับจำนวนเดิม");
+        } else {
+          suggestions.push(
+            `จะเพิ่มจำนวนใหม่ในหน่วย ${barcodeType.toUpperCase()}`
+          );
+        }
+
+        // ✅ Show other active units
+        const otherActiveUnits = (["cs", "dsp", "ea"] as const)
+          .filter(
+            (unit) =>
+              unit !== barcodeType && (sameProduct.quantities[unit] || 0) > 0
+          )
+          .map(
+            (unit) => `${unit.toUpperCase()}: ${sameProduct.quantities[unit]}`
+          );
+
+        if (otherActiveUnits.length > 0) {
+          warnings.push(`มีจำนวนในหน่วยอื่น: ${otherActiveUnits.join(", ")}`);
+          suggestions.push("สินค้าชิ้นนี้จะมีหลายหน่วยหลังจากเพิ่ม");
+        }
       }
 
       return {

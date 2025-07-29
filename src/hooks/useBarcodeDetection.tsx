@@ -1,4 +1,4 @@
-// Path: ./src/hooks/useBarcodeDetection.tsx
+// Path: src/hooks/useBarcodeDetection.tsx
 "use client";
 
 import { useCallback } from "react";
@@ -6,42 +6,53 @@ import { useCameraControl } from "./camera/useCameraControl";
 import { useProductLookup } from "./product/useProductLookup";
 import { useDetectionProcessor } from "./detection/useDetectionProcessor";
 import { useCanvasRenderer } from "./canvas/useCanvasRenderer";
+import type { UseBarcodeDetectionReturn } from "./types";
 
-export const useBarcodeDetection = () => {
-  // Sub-hooks
+export const useBarcodeDetection = (): UseBarcodeDetectionReturn => {
+  // =========================================
+  // 🎥 Camera Control
+  // =========================================
   const camera = useCameraControl();
 
-  // 🔥 สร้าง callback สำหรับปิดกล้องเมื่อเจอสินค้า
+  // =========================================
+  // 🛒 Product Lookup with Callback
+  // =========================================
   const handleProductFound = useCallback(() => {
     console.log("🎯 Product found! Stopping camera...");
     camera.stopCamera();
   }, [camera]);
 
-  // ส่ง callback ไปยัง productLookup
   const productLookup = useProductLookup({
     onProductFound: handleProductFound,
   });
 
+  // =========================================
+  // 🎨 Canvas Rendering
+  // =========================================
   const canvas = useCanvasRenderer();
 
+  // =========================================
+  // 🔍 Detection Processing
+  // =========================================
   const detection = useDetectionProcessor({
     videoRef: camera.videoRef,
     lastDetectedCode: productLookup.lastDetectedCode,
     updateBarcode: productLookup.updateBarcode,
   });
 
-  // Combined error handling
+  // =========================================
+  // 🎛️ Combined Actions
+  // =========================================
   const clearError = useCallback(() => {
-    // Clear camera errors through camera hook if needed
     productLookup.clearProduct();
   }, [productLookup]);
 
-  // Enhanced draw detections with all required params
+  // ✅ FIXED: Updated parameter name to match new canvas interface
   const drawDetections = useCallback(() => {
     canvas.drawDetections(
       detection.detections,
       productLookup.product,
-      productLookup.detectedBarcodeType,
+      productLookup.detectedBarcodeType, // This is ProductUnitType, not BarcodeType
       camera.videoRef
     );
   }, [
@@ -52,7 +63,6 @@ export const useBarcodeDetection = () => {
     camera.videoRef,
   ]);
 
-  // Manual scan function for inventory tab
   const manualScan = useCallback(async () => {
     if (!camera.isStreaming) {
       await camera.startCamera();
@@ -64,69 +74,70 @@ export const useBarcodeDetection = () => {
     }
   }, [camera, detection]);
 
-  // Force rescan current view
   const rescanCurrentView = useCallback(async () => {
     if (camera.isStreaming) {
       await detection.captureAndProcess();
     }
   }, [camera, detection]);
 
-  // Enhanced stop camera that resets everything
   const stopCamera = useCallback(() => {
     camera.stopCamera();
     detection.resetDetections();
   }, [camera, detection]);
 
-  // 🔥 เพิ่มฟังก์ชันเคลียร์ทั้งหมดและรีสตาร์ทกล้อง (สำหรับสแกนต่อ)
   const restartForNextScan = useCallback(() => {
     console.log("🔄 Restarting for next scan...");
     productLookup.clearCurrentDetection();
     detection.resetDetections();
-    // ไม่ต้องเปิดกล้องใหม่ - ให้ user กดเริ่มเอง
   }, [productLookup, detection]);
 
+  // =========================================
+  // 📤 Return Combined Interface
+  // =========================================
   return {
-    // Refs (from camera and canvas)
+    // 📚 Refs
     videoRef: camera.videoRef,
     canvasRef: canvas.canvasRef,
     containerRef: canvas.containerRef,
 
-    // Camera state and actions
+    // 🎥 Camera state and actions
     isStreaming: camera.isStreaming,
     videoConstraints: camera.videoConstraints,
     startCamera: camera.startCamera,
     stopCamera,
     switchCamera: camera.switchCamera,
+    setVideoConstraints: camera.setVideoConstraints,
 
-    // ⭐ เพิ่ม torch functionality จาก camera hook
+    // 🔦 Torch control
     torchOn: camera.torchOn,
     toggleTorch: camera.toggleTorch,
 
-    // Detection state and actions
+    // 🔍 Detection state and actions
     detections: detection.detections,
     processingQueue: detection.processingQueue,
     stats: detection.stats,
     captureAndProcess: detection.captureAndProcess,
+    resetDetections: detection.resetDetections,
+    lastDetectedCode: productLookup.lastDetectedCode,
 
-    // Product state and actions
+    // 🛒 Product lookup state
     product: productLookup.product,
-    detectedBarcodeType: productLookup.detectedBarcodeType,
+    detectedBarcodeType: productLookup.detectedBarcodeType, // ProductUnitType
     isLoadingProduct: productLookup.isLoadingProduct,
     productError: productLookup.productError,
-    lastDetectedCode: productLookup.lastDetectedCode,
-    updateBarcode: productLookup.updateBarcode,
-    clearProduct: productLookup.clearProduct,
-    clearCurrentDetection: productLookup.clearCurrentDetection,
+    clearProduct: productLookup.clearProduct, // ✅ FIXED: Added missing property
 
-    // Canvas actions
+    // 🎨 Canvas actions
     drawDetections,
     updateCanvasSize: canvas.updateCanvasSize,
 
-    // Combined actions
-    errors: camera.errors || productLookup.productError,
-    clearError,
+    // 🎛️ Enhanced actions
     manualScan,
     rescanCurrentView,
-    restartForNextScan, // 🔥 ฟังก์ชันใหม่สำหรับเริ่มสแกนใหม่
+    restartForNextScan,
+
+    // 🚨 Combined error handling
+    errors: camera.errors || productLookup.productError,
+    clearError,
   };
 };

@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Package2, Package, Archive, Grid3X3 } from "lucide-react";
-import { InventoryItem } from "../../hooks/inventory/types";
+import { InventoryItem } from "../../types/inventory";
 
 export type UnitFilterType = "all" | "ea" | "dsp" | "cs" | "multi";
 
@@ -28,7 +28,7 @@ const UNIT_FILTER_CONFIG = {
     label: "ชิ้น",
     shortLabel: "EA",
     icon: Package2,
-    color: "bg-blue-50 text-blue-700 border-blue-200",
+    color: "bg-blue-100 text-blue-700 border-blue-200",
     activeColor: "bg-blue-600 text-white border-blue-600",
     description: "สินค้าขายเป็นชิ้น",
   },
@@ -36,7 +36,7 @@ const UNIT_FILTER_CONFIG = {
     label: "แพ็ค",
     shortLabel: "DSP",
     icon: Package,
-    color: "bg-green-50 text-green-700 border-green-200",
+    color: "bg-green-100 text-green-700 border-green-200",
     activeColor: "bg-green-600 text-white border-green-600",
     description: "สินค้าขายเป็นแพ็ค",
   },
@@ -44,7 +44,7 @@ const UNIT_FILTER_CONFIG = {
     label: "ลัง",
     shortLabel: "CS",
     icon: Archive,
-    color: "bg-purple-50 text-purple-700 border-purple-200",
+    color: "bg-purple-100 text-purple-700 border-purple-200",
     activeColor: "bg-purple-600 text-white border-purple-600",
     description: "สินค้าขายเป็นลัง",
   },

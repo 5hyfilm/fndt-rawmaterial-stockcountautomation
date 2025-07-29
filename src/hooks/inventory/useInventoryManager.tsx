@@ -1,4 +1,4 @@
-// Path: src/hooks/inventory/useInventoryManager.tsx - Phase 2: Fixed TypeScript Issues
+// Path: src/hooks/inventory/useInventoryManager.tsx - Cleaned Version (No Legacy Code)
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -8,18 +8,14 @@ import {
   UseInventoryManagerReturn,
   QuantityDetail,
   StorageConfig,
-  migrateOldInventoryItem,
-  isLegacyInventoryItem,
-  isModernInventoryItem,
-  LegacyInventoryItem,
-} from "./types";
+} from "../../types/inventory";
 import { useInventoryStorage } from "./useInventoryStorage";
 import { useInventoryOperations } from "./useInventoryOperations";
 
 const STORAGE_CONFIG: StorageConfig = {
-  storageKey: "fn_inventory_data_v2", // ✅ เปลี่ยน key ใหม่
+  storageKey: "fn_inventory_data_v2",
   versionKey: "fn_inventory_version_v2",
-  currentVersion: "2.0", // ✅ Version ใหม่
+  currentVersion: "2.0",
 };
 
 export const useInventoryManager = (): UseInventoryManagerReturn => {
@@ -28,22 +24,15 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
   const [error, setError] = useState<string | null>(null);
 
   // ✅ Storage operations
-  const {
-    loadInventory: loadFromStorage,
-    saveInventory,
-    // ✅ Remove unused variables to fix ESLint warnings
-    // isLoading: storageLoading,
-    // error: storageError,
-  } = useInventoryStorage(STORAGE_CONFIG);
+  const { loadInventory: loadFromStorage, saveInventory } =
+    useInventoryStorage(STORAGE_CONFIG);
 
-  // ✅ Business operations
+  // ✅ Business operations (ไม่มี legacy methods)
   const {
     addOrUpdateMultiUnitItem,
     updateUnitQuantity,
     findItemByMaterialCode,
-    addOrUpdateItem, // legacy
-    updateItemQuantity, // legacy
-    findItemByBarcode, // legacy
+    findItemByBarcode,
     removeItem,
     searchItems,
   } = useInventoryOperations({
@@ -53,128 +42,22 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
     setError,
   });
 
-  // ✅ FIXED: Data migration helper with proper type safety
-  const migrateOldData = (oldData: unknown[]): InventoryItem[] => {
-    console.log("🔄 Migrating old inventory data...");
-
-    try {
-      return oldData
-        .map((oldItem) => {
-          // Type guard to ensure oldItem is an object
-          if (!oldItem || typeof oldItem !== "object") {
-            console.warn("⚠️ Skipping invalid data item:", oldItem);
-            return null;
-          }
-
-          // ✅ Use type guards instead of unsafe casting
-          if (isModernInventoryItem(oldItem)) {
-            // Already in new format, no migration needed
-            return oldItem;
-          }
-
-          if (isLegacyInventoryItem(oldItem)) {
-            // Migrate legacy item
-            const barcodeType = oldItem.barcodeType || "ea";
-            return migrateOldInventoryItem(oldItem, barcodeType);
-          }
-
-          // ✅ Handle unknown format by attempting to convert to legacy first
-          const unknownItem = oldItem as Record<string, unknown>;
-
-          // Check if it has minimum required fields for legacy item
-          if (
-            typeof unknownItem.id === "string" &&
-            typeof unknownItem.productName === "string" &&
-            typeof unknownItem.barcode === "string"
-          ) {
-            // Convert to legacy item structure
-            const legacyItem: LegacyInventoryItem = {
-              id: unknownItem.id,
-              materialCode:
-                typeof unknownItem.materialCode === "string"
-                  ? unknownItem.materialCode
-                  : unknownItem.id,
-              productName: unknownItem.productName,
-              brand:
-                typeof unknownItem.brand === "string"
-                  ? unknownItem.brand
-                  : "ไม่ระบุ",
-              category:
-                typeof unknownItem.category === "string"
-                  ? unknownItem.category
-                  : "ไม่ระบุ",
-              size:
-                typeof unknownItem.size === "string" ? unknownItem.size : "",
-              unit:
-                typeof unknownItem.unit === "string"
-                  ? unknownItem.unit
-                  : "ชิ้น",
-              barcode: unknownItem.barcode,
-              quantity:
-                typeof unknownItem.quantity === "number"
-                  ? unknownItem.quantity
-                  : 0,
-              lastUpdated:
-                typeof unknownItem.lastUpdated === "string"
-                  ? unknownItem.lastUpdated
-                  : new Date().toISOString(),
-              barcodeType: ["cs", "dsp", "ea"].includes(
-                unknownItem.barcodeType as string
-              )
-                ? (unknownItem.barcodeType as "cs" | "dsp" | "ea")
-                : "ea",
-            };
-
-            // Migrate the converted legacy item
-            return migrateOldInventoryItem(
-              legacyItem,
-              legacyItem.barcodeType || "ea"
-            );
-          }
-
-          console.warn("⚠️ Skipping unrecognizable data format:", unknownItem);
-          return null;
-        })
-        .filter((item): item is InventoryItem => item !== null);
-    } catch (error) {
-      console.error("❌ Migration error:", error);
-      return [];
-    }
-  };
-
-  // ✅ Load inventory on mount
+  // ✅ Load inventory on mount (ไม่มี migration logic)
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        // ลองโหลดข้อมูลใหม่ก่อน
-        const newData = loadFromStorage();
+        // ✅ โหลดข้อมูลใหม่เท่านั้น (ไม่ต้อง migrate)
+        const data = loadFromStorage();
 
-        if (newData && newData.length > 0) {
-          console.log("📦 Loaded new format data:", newData.length, "items");
-          const migratedData = migrateOldData(newData);
-          setInventory(migratedData);
+        if (data && data.length > 0) {
+          console.log("📦 Loaded inventory data:", data.length, "items");
+          setInventory(data);
         } else {
-          // ถ้าไม่มีข้อมูลใหม่ ลองโหลดข้อมูลเก่า
-          const oldStorageKey = "fn_inventory_data"; // key เก่า
-          const oldDataStr = localStorage.getItem(oldStorageKey);
-
-          if (oldDataStr) {
-            console.log("🔄 Found old format data, migrating...");
-            const oldData = JSON.parse(oldDataStr);
-            const migratedData = migrateOldData(oldData);
-            setInventory(migratedData);
-
-            // บันทึกข้อมูลใหม่และลบข้อมูลเก่า
-            saveInventory(migratedData);
-            localStorage.removeItem(oldStorageKey);
-            console.log("✅ Migration completed and old data cleaned up");
-          } else {
-            console.log("📭 No existing inventory data found");
-            setInventory([]);
-          }
+          console.log("📭 No existing inventory data found");
+          setInventory([]);
         }
       } catch (error) {
         console.error("❌ Error loading inventory:", error);
@@ -186,9 +69,9 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
     };
 
     loadData();
-  }, [loadFromStorage, saveInventory]);
+  }, [loadFromStorage]);
 
-  // ✅ Calculate summary
+  // ✅ Calculate summary (ไม่มี legacy fallback)
   const summary: InventorySummary = useMemo(() => {
     const totalItems = inventory.length;
     const totalProducts = inventory.reduce(
@@ -215,14 +98,14 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
       brands[brand] = (brands[brand] || 0) + 1;
     });
 
-    // ✅ NEW: Multi-unit quantity breakdown
+    // ✅ Multi-unit quantity breakdown (ใช้ quantities โดยตรง)
     let totalCS = 0;
     let totalDSP = 0;
     let totalEA = 0;
     let itemsWithMultipleUnits = 0;
 
     inventory.forEach((item) => {
-      const { cs = 0, dsp = 0, ea = 0 } = item.quantities || {};
+      const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
 
       totalCS += cs;
       totalDSP += dsp;
@@ -250,7 +133,7 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
     };
   }, [inventory]);
 
-  // ✅ FIXED: Add missing updateItemQuantityDetail method
+  // ✅ Update item quantity detail
   const updateItemQuantityDetail = (
     materialCode: string,
     quantityDetail: QuantityDetail
@@ -301,7 +184,7 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
     }
   };
 
-  // ✅ FIXED: Export inventory (return boolean, not void)
+  // ✅ Export inventory
   const exportInventory = (): boolean => {
     try {
       // TODO: Implement export logic
@@ -319,11 +202,10 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
     setError(null);
   };
 
-  // ✅ Reload inventory
+  // ✅ Reload inventory (ไม่มี migration)
   const loadInventory = () => {
     const data = loadFromStorage();
-    const migratedData = migrateOldData(data);
-    setInventory(migratedData);
+    setInventory(data);
   };
 
   // ✅ Reset inventory state
@@ -340,34 +222,30 @@ export const useInventoryManager = (): UseInventoryManagerReturn => {
   };
 
   return {
-    // State
+    // ✅ State
     inventory,
     isLoading,
     error,
     summary,
 
-    // ✅ NEW: Multi-unit operations (หลัก)
+    // ✅ Core multi-unit operations
     addOrUpdateMultiUnitItem,
     updateUnitQuantity,
-    findItemByMaterialCode,
-
-    // ✅ FIXED: Add the missing method
     updateItemQuantityDetail,
 
-    // ✅ LEGACY: Backward compatibility (จะค่อย ๆ เอาออก)
-    addOrUpdateItem,
-    updateItemQuantity,
+    // ✅ Search and find operations
+    findItemByMaterialCode,
     findItemByBarcode,
+    searchItems,
 
-    // Core operations
+    // ✅ Core operations
     removeItem,
     clearInventory,
-    searchItems,
     exportInventory,
+    resetInventoryState,
 
-    // Utilities
+    // ✅ Utilities
     clearError,
     loadInventory,
-    resetInventoryState,
   };
 };

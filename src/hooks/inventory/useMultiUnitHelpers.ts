@@ -1,9 +1,5 @@
-// Path: src/hooks/inventory/useMultiUnitHelpers.ts - Helper functions for Multi-Unit Management
-import {
-  InventoryItem,
-  MultiUnitQuantities,
-  LegacyInventoryItem,
-} from "./types";
+// Path: src/hooks/inventory/useMultiUnitHelpers.ts - Cleaned Version (No Legacy Code)
+import { InventoryItem, MultiUnitQuantities } from "../../types/inventory";
 
 export type UnitType = "ea" | "dsp" | "cs";
 
@@ -38,15 +34,10 @@ export const UNIT_CONFIG = {
   },
 } as const;
 
-// ✅ Get active units for an inventory item
+// ✅ Get active units for an inventory item (ไม่มี legacy fallback)
 export const getActiveUnits = (item: InventoryItem): UnitType[] => {
-  if (!item.quantities) {
-    // Fallback for legacy items
-    return ["ea"];
-  }
-
   return (["cs", "dsp", "ea"] as const).filter(
-    (unit) => (item.quantities?.[unit] || 0) > 0
+    (unit) => (item.quantities[unit] || 0) > 0
   );
 };
 
@@ -62,26 +53,17 @@ export const getPrimaryUnit = (item: InventoryItem): UnitType => {
   )[0];
 };
 
-// ✅ Get total quantity across all units
+// ✅ Get total quantity across all units (ไม่มี legacy fallback)
 export const getTotalQuantity = (item: InventoryItem): number => {
-  if (!item.quantities) {
-    return item.quantity || 0;
-  }
-
   const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
   return cs + dsp + ea;
 };
 
-// ✅ Get quantity for specific unit
+// ✅ Get quantity for specific unit (ไม่มี legacy fallback)
 export const getUnitQuantity = (
   item: InventoryItem,
   unit: UnitType
 ): number => {
-  if (!item.quantities) {
-    // For legacy items, assume EA if no specific unit info
-    return unit === "ea" ? item.quantity || 0 : 0;
-  }
-
   return item.quantities[unit] || 0;
 };
 
@@ -178,38 +160,6 @@ export const mergeQuantities = (
   };
 };
 
-// ✅ FIXED: Convert legacy item to multi-unit format with proper typing
-export const convertLegacyToMultiUnit = (
-  legacyItem: LegacyInventoryItem,
-  barcodeType: UnitType = "ea"
-): InventoryItem => {
-  const quantities = createEmptyQuantities();
-  quantities[barcodeType] = legacyItem.quantity || 0;
-
-  return {
-    id: legacyItem.id,
-    materialCode: legacyItem.materialCode || legacyItem.barcode,
-    productName: legacyItem.productName || "ไม่ระบุชื่อ",
-    brand: legacyItem.brand || "ไม่ระบุ",
-    category: legacyItem.category || "ไม่ระบุ",
-    size: legacyItem.size || "",
-    unit: legacyItem.unit || "",
-    barcode: legacyItem.barcode,
-    quantity: legacyItem.quantity || 0, // Keep for backward compatibility
-    quantities,
-    lastUpdated: legacyItem.lastUpdated || new Date().toISOString(),
-    productData: legacyItem.productData,
-    addedBy: legacyItem.addedBy,
-    branchCode: legacyItem.branchCode,
-    branchName: legacyItem.branchName,
-    productGroup: legacyItem.productGroup,
-    thaiDescription: legacyItem.thaiDescription,
-    scannedBarcodes: {
-      [barcodeType]: legacyItem.barcode,
-    },
-  };
-};
-
 // ✅ Get scanned barcode for specific unit type
 export const getScannedBarcodeForUnit = (
   item: InventoryItem,
@@ -282,6 +232,7 @@ export interface QuantitySummary {
   multiUnitItems: number;
 }
 
+// ✅ Create quantity summary (ไม่มี legacy fallback)
 export const createQuantitySummary = (
   inventory: InventoryItem[]
 ): QuantitySummary => {
@@ -297,15 +248,15 @@ export const createQuantitySummary = (
   };
 
   inventory.forEach((item) => {
-    const quantities = item.quantities || createEmptyQuantities();
+    const { cs = 0, dsp = 0, ea = 0 } = item.quantities;
 
-    summary.totalCS += quantities.cs || 0;
-    summary.totalDSP += quantities.dsp || 0;
-    summary.totalEA += quantities.ea || 0;
+    summary.totalCS += cs;
+    summary.totalDSP += dsp;
+    summary.totalEA += ea;
 
-    if ((quantities.cs || 0) > 0) summary.itemsWithCS++;
-    if ((quantities.dsp || 0) > 0) summary.itemsWithDSP++;
-    if ((quantities.ea || 0) > 0) summary.itemsWithEA++;
+    if (cs > 0) summary.itemsWithCS++;
+    if (dsp > 0) summary.itemsWithDSP++;
+    if (ea > 0) summary.itemsWithEA++;
 
     if (isMultiUnit(item)) summary.multiUnitItems++;
   });
@@ -329,7 +280,7 @@ export const getUnitDisplayText = (
   return `${quantity} ${config.label}`;
 };
 
-// ✅ Export for use in components
+// ✅ Export for use in components (ไม่มี convertLegacyToMultiUnit)
 export const MultiUnitHelpers = {
   UNIT_CONFIG,
   getActiveUnits,
@@ -342,7 +293,6 @@ export const MultiUnitHelpers = {
   updateUnitInQuantities,
   addToUnitQuantity,
   mergeQuantities,
-  convertLegacyToMultiUnit,
   getScannedBarcodeForUnit,
   updateScannedBarcode,
   validateQuantities,

@@ -15,7 +15,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-// ✅ Product Group Options for dropdown
 const PRODUCT_GROUP_OPTIONS = [
   "STM", // Sterilized Milk
   "BB Gold", // Bear Brand Gold
@@ -33,18 +32,17 @@ interface NewProductData {
   productGroup: string;
   description: string;
   countCs: number;
-  countDsp: number; // ✅ เพิ่ม DSP
+  countDsp: number;
   countPieces: number;
 }
 
-// ✅ FIX: สร้าง interface แยกสำหรับ form errors
 interface FormErrors {
   barcode?: string;
   productName?: string;
   productGroup?: string;
   description?: string;
   countCs?: string;
-  countDsp?: string; // ✅ เพิ่ม DSP error
+  countDsp?: string;
   countPieces?: string;
 }
 
@@ -54,6 +52,90 @@ interface AddNewProductFormProps {
   onClose: () => void;
   onSave: (productData: NewProductData) => Promise<boolean>;
 }
+
+// Input sanitization utilities
+const sanitizeInput = (input: string): string => {
+  return input
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/[<>\"'&]/g, (match) => {
+      // Escape dangerous characters
+      const escapeMap: { [key: string]: string } = {
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#x27;",
+        "&": "&amp;",
+      };
+      return escapeMap[match] || match;
+    })
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, "") // Remove event handlers
+    .trim();
+};
+
+const sanitizeProductName = (input: string): string => {
+  const sanitized = sanitizeInput(input);
+  // Allow alphanumeric, spaces, hyphens, dots, parentheses, forward slash
+  return sanitized.replace(/[^a-zA-Z0-9ก-๙\s.\-()\/]/g, "").slice(0, 50);
+};
+
+const sanitizeDescription = (input: string): string => {
+  const sanitized = sanitizeInput(input);
+  // Allow more characters for description but still safe
+  return sanitized.replace(/[^a-zA-Z0-9ก-๙\s.\-(),\/]/g, "").slice(0, 500);
+};
+
+// Validation utilities
+const validateProductName = (productName: string): string | null => {
+  const trimmed = productName.trim();
+
+  if (!trimmed) return "กรุณากรอกรหัสสินค้า";
+  if (trimmed.length < 2) return "รหัสสินค้าต้องมีอย่างน้อย 2 ตัวอักษร";
+  if (trimmed.length > 50) return "รหัสสินค้าไม่ควรเกิน 50 ตัวอักษร";
+
+  // Check for suspicious patterns
+  if (/script|alert|onerror|onload|javascript/i.test(trimmed)) {
+    return "รหัสสินค้ามีรูปแบบที่ไม่อนุญาต";
+  }
+
+  // Must contain at least one alphanumeric character
+  if (!/[a-zA-Z0-9ก-๙]/.test(trimmed)) {
+    return "รหัสสินค้าต้องมีตัวอักษรหรือตัวเลขอย่างน้อย 1 ตัว";
+  }
+
+  return null;
+};
+
+const validateDescription = (description: string): string | null => {
+  const trimmed = description.trim();
+
+  if (!trimmed) return "กรุณากรอกรายละเอียด";
+  if (trimmed.length < 3) return "รายละเอียดต้องมีอย่างน้อย 3 ตัวอักษร";
+  if (trimmed.length > 500) return "รายละเอียดไม่ควรเกิน 500 ตัวอักษร";
+
+  // Check for suspicious patterns
+  if (/script|alert|onerror|onload|javascript/i.test(trimmed)) {
+    return "รายละเอียดมีรูปแบบที่ไม่อนุญาต";
+  }
+
+  return null;
+};
+
+const validateBarcode = (barcode: string): string | null => {
+  const trimmed = barcode.trim();
+
+  if (!trimmed) return "กรุณากรอกหมายเลขบาร์โค้ด";
+  if (!/^\d{8,14}$/.test(trimmed)) return "บาร์โค้ดต้องเป็นตัวเลข 8-14 หลัก";
+
+  return null;
+};
+
+const validateCount = (count: number, fieldName: string): string | null => {
+  if (count < 0) return `จำนวน${fieldName}ต้องไม่ติดลบ`;
+  if (count > 99999) return `จำนวน${fieldName}ไม่ควรเกิน 99,999`;
+
+  return null;
+};
 
 export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
   isVisible,
@@ -67,7 +149,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     productGroup: "",
     description: "",
     countCs: 0,
-    countDsp: 0, // ✅ เพิ่ม DSP
+    countDsp: 0,
     countPieces: 0,
   });
 
@@ -76,7 +158,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
   const [isBarcodeEditable, setIsBarcodeEditable] = useState(false);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Update barcode when prop changes
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -85,14 +166,31 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     setIsBarcodeEditable(false);
   }, [barcode]);
 
-  // Update form data
-  const updateField = (field: keyof NewProductData, value: string | number) => {
+  const updateField = (
+    field: keyof NewProductData,
+    value: string | number
+  ): void => {
+    let sanitizedValue = value;
+
+    if (typeof value === "string") {
+      switch (field) {
+        case "productName":
+          sanitizedValue = sanitizeProductName(value);
+          break;
+        case "description":
+          sanitizedValue = sanitizeDescription(value);
+          break;
+        case "barcode":
+          sanitizedValue = value.replace(/\D/g, "").slice(0, 14);
+          break;
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: sanitizedValue,
     }));
 
-    // Clear error when user starts typing
     if (errors[field as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
@@ -101,13 +199,11 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     }
   };
 
-  // ✅ Helper function สำหรับ format barcode
   const formatBarcode = (value: string): string => {
     const numbersOnly = value.replace(/\D/g, "");
     return numbersOnly.slice(0, 14);
   };
 
-  // ✅ Get barcode validation status
   const getBarcodeValidationStatus = (): {
     isValid: boolean;
     message: string;
@@ -131,8 +227,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     return { isValid: true, message: "รูปแบบถูกต้อง" };
   };
 
-  // ✅ Toggle barcode editable state
-  const toggleBarcodeEditable = () => {
+  const toggleBarcodeEditable = (): void => {
     const newEditableState = !isBarcodeEditable;
     setIsBarcodeEditable(newEditableState);
 
@@ -151,20 +246,14 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     }
   };
 
-  // Validate form
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // ✅ Barcode validation
-    if (!formData.barcode.trim()) {
-      newErrors.barcode = "กรุณากรอกหมายเลขบาร์โค้ด";
-    } else if (!/^\d{8,14}$/.test(formData.barcode.trim())) {
-      newErrors.barcode = "บาร์โค้ดต้องเป็นตัวเลข 8-14 หลัก";
-    }
+    const barcodeError = validateBarcode(formData.barcode);
+    if (barcodeError) newErrors.barcode = barcodeError;
 
-    if (!formData.productName.trim()) {
-      newErrors.productName = "กรุณากรอกรหัสสินค้า";
-    }
+    const productNameError = validateProductName(formData.productName);
+    if (productNameError) newErrors.productName = productNameError;
 
     if (!formData.productGroup.trim()) {
       newErrors.productGroup = "กรุณาเลือกหมวดหมู่สินค้า";
@@ -172,24 +261,19 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
       newErrors.productGroup = "กรุณาเลือกหมวดหมู่สินค้าที่ถูกต้อง";
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = "กรุณากรอกรายละเอียด";
-    }
+    const descriptionError = validateDescription(formData.description);
+    if (descriptionError) newErrors.description = descriptionError;
 
-    if (formData.countCs < 0) {
-      newErrors.countCs = "จำนวนลังต้องไม่ติดลบ";
-    }
+    const countCsError = validateCount(formData.countCs, "ลัง");
+    if (countCsError) newErrors.countCs = countCsError;
 
-    // ✅ เพิ่ม validation สำหรับ DSP
-    if (formData.countDsp < 0) {
-      newErrors.countDsp = "จำนวนแพ็คต้องไม่ติดลบ";
-    }
+    const countDspError = validateCount(formData.countDsp, "แพ็ค");
+    if (countDspError) newErrors.countDsp = countDspError;
 
-    if (formData.countPieces < 0) {
-      newErrors.countPieces = "จำนวนชิ้นต้องไม่ติดลบ";
-    }
+    const countPiecesError = validateCount(formData.countPieces, "ชิ้น");
+    if (countPiecesError) newErrors.countPieces = countPiecesError;
 
-    // ✅ ตรวจสอบว่าต้องมีอย่างน้อย 1 หน่วย
+    // Check at least one unit is provided
     if (
       formData.countCs === 0 &&
       formData.countDsp === 0 &&
@@ -204,8 +288,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!validateForm()) {
       console.log("❌ Form validation failed");
       return;
@@ -213,8 +296,16 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
 
     setIsLoading(true);
     try {
-      console.log("💾 Submitting form data:", formData);
-      const success = await onSave(formData);
+      // Final sanitization before saving
+      const sanitizedData: NewProductData = {
+        ...formData,
+        productName: sanitizeProductName(formData.productName),
+        description: sanitizeDescription(formData.description),
+        barcode: formData.barcode.trim(),
+      };
+
+      console.log("💾 Submitting sanitized form data:", sanitizedData);
+      const success = await onSave(sanitizedData);
       if (success) {
         console.log("✅ Product saved successfully");
         handleClose();
@@ -228,15 +319,14 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     }
   };
 
-  // Handle close
-  const handleClose = () => {
+  const handleClose = (): void => {
     setFormData({
       barcode: "",
       productName: "",
       productGroup: "",
       description: "",
       countCs: 0,
-      countDsp: 0, // ✅ รีเซ็ต DSP
+      countDsp: 0,
       countPieces: 0,
     });
     setErrors({});
@@ -244,26 +334,31 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     onClose();
   };
 
-  // Don't render if not visible
+  const handleCountChange = (
+    field: "countCs" | "countDsp" | "countPieces",
+    value: string
+  ): void => {
+    const numValue = parseInt(value) || 0;
+    const clampedValue = Math.max(0, Math.min(99999, numValue));
+    updateField(field, clampedValue);
+  };
+
   if (!isVisible) return null;
 
   const barcodeValidation = getBarcodeValidationStatus();
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300"
         onClick={handleClose}
       />
 
-      {/* Modal */}
       <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
         <div
           className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -280,7 +375,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
             </div>
           </div>
 
-          {/* Content - เพิ่ม scroll */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-4">
               {/* Barcode Field */}
@@ -298,6 +392,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                       updateField("barcode", formatBarcode(e.target.value))
                     }
                     readOnly={!isBarcodeEditable}
+                    maxLength={14}
                     className={`flex-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm ${
                       errors.barcode
                         ? "border-red-500"
@@ -326,7 +421,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                   </button>
                 </div>
 
-                {/* Barcode validation feedback */}
                 <p
                   className={`text-xs mt-1 ${
                     errors.barcode
@@ -350,12 +444,18 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                   type="text"
                   value={formData.productName}
                   onChange={(e) => updateField("productName", e.target.value)}
+                  maxLength={50}
                   className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm ${
                     errors.productName ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="กรอกรหัสสินค้า"
                   disabled={isLoading}
                 />
+                {formData.productName.length > 30 && (
+                  <p className="text-yellow-600 text-xs mt-1">
+                    ความยาว: {formData.productName.length}/50 ตัวอักษร
+                  </p>
+                )}
                 {errors.productName && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.productName}
@@ -409,12 +509,18 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                   value={formData.description}
                   onChange={(e) => updateField("description", e.target.value)}
                   rows={3}
+                  maxLength={500}
                   className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm resize-none ${
                     errors.description ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="กรอกรายละเอียดสินค้า"
                   disabled={isLoading}
                 />
+                {formData.description.length > 400 && (
+                  <p className="text-yellow-600 text-xs mt-1">
+                    ความยาว: {formData.description.length}/500 ตัวอักษร
+                  </p>
+                )}
                 {errors.description && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.description}
@@ -422,9 +528,8 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 )}
               </div>
 
-              {/* ✅ Count Section - ปรับเป็น 3 คอลัมน์ */}
+              {/* Count Section */}
               <div className="grid grid-cols-3 gap-2">
-                {/* Count CS */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <Hash size={12} />
@@ -434,9 +539,10 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                     type="number"
                     value={formData.countCs}
                     onChange={(e) =>
-                      updateField("countCs", parseInt(e.target.value) || 0)
+                      handleCountChange("countCs", e.target.value)
                     }
                     min="0"
+                    max="99999"
                     className={`w-full px-2 py-1.5 border rounded-md focus:ring-1 focus:ring-fn-green focus:border-transparent transition-colors text-xs ${
                       errors.countCs ? "border-red-500" : "border-gray-300"
                     }`}
@@ -450,7 +556,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                   )}
                 </div>
 
-                {/* ✅ Count DSP - ใหม่ */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <Hash size={12} />
@@ -460,9 +565,10 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                     type="number"
                     value={formData.countDsp}
                     onChange={(e) =>
-                      updateField("countDsp", parseInt(e.target.value) || 0)
+                      handleCountChange("countDsp", e.target.value)
                     }
                     min="0"
+                    max="99999"
                     className={`w-full px-2 py-1.5 border rounded-md focus:ring-1 focus:ring-fn-green focus:border-transparent transition-colors text-xs ${
                       errors.countDsp ? "border-red-500" : "border-gray-300"
                     }`}
@@ -476,7 +582,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                   )}
                 </div>
 
-                {/* Count Pieces */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <Hash size={12} />
@@ -486,9 +591,10 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                     type="number"
                     value={formData.countPieces}
                     onChange={(e) =>
-                      updateField("countPieces", parseInt(e.target.value) || 0)
+                      handleCountChange("countPieces", e.target.value)
                     }
                     min="0"
+                    max="99999"
                     className={`w-full px-2 py-1.5 border rounded-md focus:ring-1 focus:ring-fn-green focus:border-transparent transition-colors text-xs ${
                       errors.countPieces ? "border-red-500" : "border-gray-300"
                     }`}
@@ -503,7 +609,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 </div>
               </div>
 
-              {/* ✅ Summary - อัปเดตให้รองรับ DSP */}
+              {/* Summary */}
               {(formData.countCs > 0 ||
                 formData.countDsp > 0 ||
                 formData.countPieces > 0) && (
@@ -522,12 +628,10 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 </div>
               )}
 
-              {/* Add some bottom padding for better mobile scrolling */}
               <div className="h-2"></div>
             </div>
           </div>
 
-          {/* Footer */}
           <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="flex gap-3">
               <button

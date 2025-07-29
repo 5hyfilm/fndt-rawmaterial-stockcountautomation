@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { InventoryItem, QuantityDetail } from "../../hooks/inventory/types";
+import { InventoryItem, QuantityDetail } from "../../types/inventory";
 import { InventoryListItem } from "./InventoryListItem";
 import { Package } from "lucide-react";
 
