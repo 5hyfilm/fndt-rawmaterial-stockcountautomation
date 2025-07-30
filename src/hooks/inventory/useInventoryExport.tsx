@@ -187,7 +187,7 @@ export const useInventoryExport = ({
     return Array.from(grouped.values());
   }, [inventory, isNewProduct]);
 
-  // ✅ Generate CSV content - ปรับปรุงการแสดงผลข้อมูล
+  // ✅ Generate CSV content - ปรับปรุงการแสดงผลข้อมูล (ลบ 4 columns ที่ไม่ต้องการ)
   const generateCsvContent = useCallback(
     (config: ExportConfig = DEFAULT_EXPORT_CONFIG) => {
       try {
@@ -221,17 +221,17 @@ export const useInventoryExport = ({
           csvContent += `\n`;
         }
 
-        // ✅ Column headers
-        const headers = ["รหัสสินค้า", "คำอธิบาย", "กลุ่มสินค้า", "แบรนด์"];
+        // ✅ Column headers - ลบ กลุ่มสินค้า, แบรนด์, จำนวน CS, จำนวน DSP
+        const headers = ["รหัสสินค้า", "คำอธิบาย"];
 
         if (config.includeUnitBreakdown) {
-          headers.push("จำนวน CS", "จำนวน DSP", "จำนวน EA");
+          headers.push("จำนวน kg"); // เก็บเฉพาะ kg
         }
 
         csvContent +=
           headers.map(escapeCsvField).join(config.csvDelimiter) + "\n";
 
-        // ✅ Data rows - สลับข้อมูลระหว่างรหัสสินค้ากับคำอธิบายสำหรับสินค้าในฐานข้อมูล
+        // ✅ Data rows - ลบข้อมูลที่ไม่ต้องการ
         groupedData.forEach((item) => {
           // ✅ สลับข้อมูล: สำหรับสินค้าในฐานข้อมูล (ไม่ใช่สินค้าใหม่)
           const displayMaterialCode = item.isNewProduct
@@ -245,16 +245,12 @@ export const useInventoryExport = ({
           const row = [
             displayMaterialCode, // รหัสสินค้า (สลับแล้วสำหรับสินค้าเก่า)
             displayDescription, // คำอธิบาย (สลับแล้วสำหรับสินค้าเก่า)
-            item.productGroup,
-            item.brand,
+            // ลบ item.productGroup และ item.brand
           ];
 
           if (config.includeUnitBreakdown) {
-            row.push(
-              item.quantities.cs.toString(),
-              item.quantities.dsp.toString(),
-              item.quantities.ea.toString()
-            );
+            // ลบ CS และ DSP เก็บเฉพาะ EA
+            row.push(item.quantities.ea.toString());
           }
 
           csvContent +=
