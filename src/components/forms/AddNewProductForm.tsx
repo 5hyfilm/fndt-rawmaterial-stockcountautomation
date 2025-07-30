@@ -12,37 +12,19 @@ import {
   Scan,
   Edit3,
   Check,
-  ChevronDown,
 } from "lucide-react";
-
-const PRODUCT_GROUP_OPTIONS = [
-  "STM", // Sterilized Milk
-  "BB Gold", // Bear Brand Gold
-  "EVAP", // Evaporated
-  "SBC", // Sweetened Beverage Creamer
-  "SCM", // Sweetened Condensed Milk
-  "Magnolia UHT", // Magnolia UHT
-  "NUTRISOY", // Nutriwell
-  "Gummy", // Gummy candy
-];
 
 interface NewProductData {
   barcode: string;
   productName: string;
-  productGroup: string;
   description: string;
-  countCs: number;
-  countDsp: number;
   countPieces: number;
 }
 
 interface FormErrors {
   barcode?: string;
   productName?: string;
-  productGroup?: string;
   description?: string;
-  countCs?: string;
-  countDsp?: string;
   countPieces?: string;
 }
 
@@ -130,9 +112,9 @@ const validateBarcode = (barcode: string): string | null => {
   return null;
 };
 
-const validateCount = (count: number, fieldName: string): string | null => {
-  if (count < 0) return `จำนวน${fieldName}ต้องไม่ติดลบ`;
-  if (count > 99999) return `จำนวน${fieldName}ไม่ควรเกิน 99,999`;
+const validateCount = (count: number): string | null => {
+  if (count <= 0) return "จำนวนชิ้นต้องมากกว่า 0";
+  if (count > 99999) return "จำนวนชิ้นไม่ควรเกิน 99,999";
 
   return null;
 };
@@ -146,10 +128,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
   const [formData, setFormData] = useState<NewProductData>({
     barcode: barcode,
     productName: "",
-    productGroup: "",
     description: "",
-    countCs: 0,
-    countDsp: 0,
     countPieces: 0,
   });
 
@@ -255,34 +234,11 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     const productNameError = validateProductName(formData.productName);
     if (productNameError) newErrors.productName = productNameError;
 
-    if (!formData.productGroup.trim()) {
-      newErrors.productGroup = "กรุณาเลือกหมวดหมู่สินค้า";
-    } else if (!PRODUCT_GROUP_OPTIONS.includes(formData.productGroup)) {
-      newErrors.productGroup = "กรุณาเลือกหมวดหมู่สินค้าที่ถูกต้อง";
-    }
-
     const descriptionError = validateDescription(formData.description);
     if (descriptionError) newErrors.description = descriptionError;
 
-    const countCsError = validateCount(formData.countCs, "ลัง");
-    if (countCsError) newErrors.countCs = countCsError;
-
-    const countDspError = validateCount(formData.countDsp, "แพ็ค");
-    if (countDspError) newErrors.countDsp = countDspError;
-
-    const countPiecesError = validateCount(formData.countPieces, "ชิ้น");
+    const countPiecesError = validateCount(formData.countPieces);
     if (countPiecesError) newErrors.countPieces = countPiecesError;
-
-    // Check at least one unit is provided
-    if (
-      formData.countCs === 0 &&
-      formData.countDsp === 0 &&
-      formData.countPieces === 0
-    ) {
-      newErrors.countCs = "กรุณากรอกจำนวนอย่างน้อย 1 ช่อง";
-      newErrors.countDsp = "";
-      newErrors.countPieces = "";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -323,10 +279,7 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     setFormData({
       barcode: "",
       productName: "",
-      productGroup: "",
       description: "",
-      countCs: 0,
-      countDsp: 0,
       countPieces: 0,
     });
     setErrors({});
@@ -334,13 +287,10 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     onClose();
   };
 
-  const handleCountChange = (
-    field: "countCs" | "countDsp" | "countPieces",
-    value: string
-  ): void => {
+  const handleCountChange = (value: string): void => {
     const numValue = parseInt(value) || 0;
     const clampedValue = Math.max(0, Math.min(99999, numValue));
-    updateField(field, clampedValue);
+    updateField("countPieces", clampedValue);
   };
 
   if (!isVisible) return null;
@@ -463,42 +413,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 )}
               </div>
 
-              {/* Product Group */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Package size={16} />
-                  หมวดหมู่สินค้า
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.productGroup}
-                    onChange={(e) =>
-                      updateField("productGroup", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm appearance-none bg-white ${
-                      errors.productGroup ? "border-red-500" : "border-gray-300"
-                    }`}
-                    disabled={isLoading}
-                  >
-                    <option value="">เลือกหมวดหมู่สินค้า</option>
-                    {PRODUCT_GROUP_OPTIONS.map((group) => (
-                      <option key={group} value={group}>
-                        {group}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
-                {errors.productGroup && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.productGroup}
-                  </p>
-                )}
-              </div>
-
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -528,102 +442,37 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 )}
               </div>
 
-              {/* Count Section */}
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <Hash size={12} />
-                    ลัง (cs)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.countCs}
-                    onChange={(e) =>
-                      handleCountChange("countCs", e.target.value)
-                    }
-                    min="0"
-                    max="99999"
-                    className={`w-full px-2 py-1.5 border rounded-md focus:ring-1 focus:ring-fn-green focus:border-transparent transition-colors text-xs ${
-                      errors.countCs ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="0"
-                    disabled={isLoading}
-                  />
-                  {errors.countCs && (
-                    <p className="text-red-500 text-xs mt-0.5">
-                      {errors.countCs}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <Hash size={12} />
-                    แพ็ค (dsp)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.countDsp}
-                    onChange={(e) =>
-                      handleCountChange("countDsp", e.target.value)
-                    }
-                    min="0"
-                    max="99999"
-                    className={`w-full px-2 py-1.5 border rounded-md focus:ring-1 focus:ring-fn-green focus:border-transparent transition-colors text-xs ${
-                      errors.countDsp ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="0"
-                    disabled={isLoading}
-                  />
-                  {errors.countDsp && (
-                    <p className="text-red-500 text-xs mt-0.5">
-                      {errors.countDsp}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <Hash size={12} />
-                    ชิ้น (ea)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.countPieces}
-                    onChange={(e) =>
-                      handleCountChange("countPieces", e.target.value)
-                    }
-                    min="0"
-                    max="99999"
-                    className={`w-full px-2 py-1.5 border rounded-md focus:ring-1 focus:ring-fn-green focus:border-transparent transition-colors text-xs ${
-                      errors.countPieces ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="0"
-                    disabled={isLoading}
-                  />
-                  {errors.countPieces && (
-                    <p className="text-red-500 text-xs mt-0.5">
-                      {errors.countPieces}
-                    </p>
-                  )}
-                </div>
+              {/* Count Section - Only Pieces */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Hash size={16} />
+                  จำนวน kg
+                </label>
+                <input
+                  type="number"
+                  value={formData.countPieces}
+                  onChange={(e) => handleCountChange(e.target.value)}
+                  min="1"
+                  max="99999"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm ${
+                    errors.countPieces ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="กรอกจำนวนชิ้น"
+                  disabled={isLoading}
+                />
+                {errors.countPieces && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.countPieces}
+                  </p>
+                )}
               </div>
 
               {/* Summary */}
-              {(formData.countCs > 0 ||
-                formData.countDsp > 0 ||
-                formData.countPieces > 0) && (
+              {formData.countPieces > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <p className="text-sm text-blue-800">
                     <span className="font-medium">จะเพิ่ม: </span>
-                    {[
-                      formData.countCs > 0 && `${formData.countCs} ลัง`,
-                      formData.countDsp > 0 && `${formData.countDsp} แพ็ค`,
-                      formData.countPieces > 0 &&
-                        `${formData.countPieces} ชิ้น`,
-                    ]
-                      .filter(Boolean)
-                      .join(" + ")}
+                    {formData.countPieces} ชิ้น
                   </p>
                 </div>
               )}

@@ -79,17 +79,14 @@ interface MobileFullScreenViewProps {
   hasUnsavedData: boolean;
   unsavedDataCount: number;
 
-  // Add New Product Form
+  // Add New Product Form - ✅ FIXED: Updated interface to match NewProductData
   showAddProductForm: boolean;
   newProductBarcode: string;
   onCloseAddProductForm: () => void;
   onSaveNewProduct: (productData: {
     barcode: string;
     productName: string;
-    productGroup: string;
     description: string;
-    countCs: number;
-    countDsp: number;
     countPieces: number;
   }) => Promise<boolean>;
 }

@@ -191,7 +191,7 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
             {/* ✅ Show scanned type indicator - แสดงแค่ EA */}
             <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
               <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-              หน่วยนับ: ชิ้น (EA)
+              หน่วยนับ: kg
             </div>
           </div>
 

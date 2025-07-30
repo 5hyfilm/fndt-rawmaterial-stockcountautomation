@@ -215,24 +215,25 @@ export default function BarcodeDetectionPage() {
     setShowAddProductForm(true);
   };
 
+  // ✅ FIXED: Updated function signature to match new interface
   const handleSaveNewProduct = async (productData: {
     barcode: string;
     productName: string;
-    productGroup: string;
     description: string;
-    countCs: number;
-    countDsp: number;
     countPieces: number;
   }): Promise<boolean> => {
     try {
-      if (!isValidProductGroup(productData.productGroup)) return false;
+      // ✅ FIXED: Use default product group since we removed the selection
+      const defaultProductGroup = "STM"; // Set a default product group
+
+      if (!isValidProductGroup(defaultProductGroup)) return false;
 
       const newProduct: Product = {
         id: `NEW_${Date.now()}`,
         barcode: productData.barcode,
         name: productData.productName,
         brand: "สินค้าใหม่",
-        category: getProductCategoryFromGroup(productData.productGroup),
+        category: getProductCategoryFromGroup(defaultProductGroup),
         description: productData.description,
         price: 0,
         status: ProductStatus.ACTIVE,
@@ -241,17 +242,18 @@ export default function BarcodeDetectionPage() {
       };
 
       if (addOrUpdateMultiUnitItem) {
+        // ✅ FIXED: Only use countPieces since other fields are removed
         const allUnitsQuantity: QuantityDetail = {
-          cs: productData.countCs || 0,
-          dsp: productData.countDsp || 0,
-          ea: productData.countPieces || 0,
+          cs: 0, // Default to 0 since removed from form
+          dsp: 0, // Default to 0 since removed from form
+          ea: productData.countPieces || 0, // Use the pieces count
         };
 
         const success = addOrUpdateMultiUnitItem(
           newProduct,
           allUnitsQuantity,
-          "ea",
-          productData.productGroup
+          "ea", // Always use "ea" since it's the only unit we support now
+          defaultProductGroup
         );
 
         if (success) {
