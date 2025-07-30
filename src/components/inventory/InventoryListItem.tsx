@@ -44,8 +44,8 @@ interface EditState {
 // ✅ Unit configuration - เหลือแค่ EA ใน UI
 const UNIT_CONFIG = {
   ea: {
-    label: "ชิ้น",
-    shortLabel: "EA",
+    label: "kg",
+    shortLabel: "kg",
     icon: Package2,
     color: "bg-blue-100 text-blue-700 border-blue-200",
     iconClass: "text-blue-500",

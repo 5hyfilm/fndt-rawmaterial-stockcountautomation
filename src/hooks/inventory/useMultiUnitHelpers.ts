@@ -6,8 +6,8 @@ export type UnitType = "ea" | "dsp" | "cs";
 // ✅ Unit configuration for consistent UI display
 export const UNIT_CONFIG = {
   ea: {
-    label: "ชิ้น",
-    shortLabel: "EA",
+    label: "kg",
+    shortLabel: "kg",
     description: "Each - ขายเป็นชิ้นเดียว",
     color: "bg-blue-100 text-blue-700 border-blue-200",
     activeColor: "bg-blue-600 text-white border-blue-600",
