@@ -1,4 +1,4 @@
-// src/components/product/InventoryAddSection.tsx - Phase 2: Integrated with Multi-Unit API
+// src/components/product/InventoryAddSection.tsx - Updated to show EA only in UI
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -12,39 +12,28 @@ interface InventoryAddSectionProps {
   onAddToInventory: (
     product: Product,
     quantityInput: QuantityInput,
-    barcodeType: "cs" | "dsp" | "ea"
+    barcodeType?: "ea" // 🔴 ลบ "cs" | "dsp" ออก - แสดงแค่ EA ใน UI
   ) => boolean;
   isVisible: boolean;
-  barcodeType?: "cs" | "dsp" | "ea";
+  barcodeType?: "ea"; // 🔴 ลบ "cs" | "dsp" ออก - แสดงแค่ EA ใน UI
 }
 
-// ✅ Unit configuration for different barcode types
+// ✅ Unit configuration - เหลือแค่ EA ใน UI
 const UNIT_CONFIG = {
   ea: {
-    label: "ชิ้น",
-    shortLabel: "EA",
+    label: "kg",
+    shortLabel: "kg",
     icon: Package2,
     color: "bg-blue-100 text-blue-700",
   },
-  dsp: {
-    label: "แพ็ค",
-    shortLabel: "DSP",
-    icon: Package2,
-    color: "bg-green-100 text-green-700",
-  },
-  cs: {
-    label: "ลัง",
-    shortLabel: "CS",
-    icon: Archive,
-    color: "bg-purple-100 text-purple-700",
-  },
+  // 🔴 ลบ dsp และ cs ออกจาก UI config
 };
 
 export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
   product,
   onAddToInventory,
   isVisible,
-  barcodeType = "ea",
+  // barcodeType = "ea", // 🔴 Default เป็น EA เท่านั้น
 }) => {
   // ✅ Single quantity state for simplified input
   const [quantity, setQuantity] = useState(1);
@@ -52,44 +41,31 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
 
-  const unitConfig = UNIT_CONFIG[barcodeType];
+  const unitConfig = UNIT_CONFIG.ea; // 🔴 บังคับใช้ EA เท่านั้น
 
-  // Reset states when visibility or barcode type changes
+  // Reset states when visibility changes
   useEffect(() => {
     if (isVisible) {
       setQuantity(1);
       setInputValue("1");
       setAddSuccess(false);
     }
-  }, [isVisible, barcodeType]);
+  }, [isVisible]); // 🔴 ลบ barcodeType dependency ออก
 
   // ✅ Handle quantity input change
   const handleQuantityChange = (value: string) => {
     setInputValue(value);
-    if (value === "" || value === "0") return;
-
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      setQuantity(numValue);
+    if (value === "" || isNaN(Number(value))) {
+      setQuantity(1);
+      return;
     }
+    const numValue = Math.max(1, parseInt(value) || 1);
+    setQuantity(numValue);
   };
 
-  // ✅ Handle input blur (validation)
+  // ✅ Handle input blur to format value
   const handleInputBlur = () => {
-    if (inputValue === "" || parseInt(inputValue) < 1) {
-      setInputValue("1");
-      setQuantity(1);
-    } else {
-      const numValue = parseInt(inputValue);
-      if (!isNaN(numValue) && numValue >= 1) {
-        const validValue = Math.max(1, numValue);
-        setQuantity(validValue);
-        setInputValue(validValue.toString());
-      } else {
-        setInputValue("1");
-        setQuantity(1);
-      }
-    }
+    setInputValue(quantity.toString());
   };
 
   // ✅ Increase quantity
@@ -108,59 +84,42 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
     }
   };
 
-  // ✅ Handle adding to inventory with new API
+  // ✅ Handle add to inventory
   const handleAddToInventory = async () => {
+    if (quantity <= 0) return;
+
     setIsAdding(true);
     try {
-      // ✅ Use new multi-unit API format
-      const quantityInput: QuantityInput = {
-        quantity: quantity,
-        unit: barcodeType,
-      };
-
-      console.log("🔘 Adding with multi-unit API:", {
-        product: product.name,
-        quantity: quantity,
-        unit: barcodeType,
-        materialCode: product.id || product.barcode,
-      });
-
-      const success = onAddToInventory(product, quantityInput, barcodeType);
+      // ✅ ส่งข้อมูลเป็น simple number สำหรับ EA
+      const success = onAddToInventory(product, quantity, "ea"); // 🔴 บังคับเป็น EA เท่านั้น
 
       if (success) {
         setAddSuccess(true);
-
-        // Reset to default
         setQuantity(1);
         setInputValue("1");
-
-        setTimeout(() => {
-          setAddSuccess(false);
-        }, 3000);
+        setTimeout(() => setAddSuccess(false), 2000);
       }
     } catch (error) {
-      console.error("❌ Failed to add to inventory:", error);
+      console.error("Error adding to inventory:", error);
     } finally {
       setIsAdding(false);
     }
   };
 
-  // ✅ Validation for add button
-  const canAdd = inputValue !== "" && quantity >= 1;
+  // ✅ Validation
+  const canAdd = quantity > 0 && !isAdding;
 
   if (!isVisible) return null;
 
   return (
-    <div className="space-y-4">
-      {/* Success Message */}
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-4">
+      {/* ✅ Success message */}
       {addSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-          <div className="bg-green-100 rounded-full p-1">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
             <Check className="text-green-600" size={16} />
-          </div>
-          <div>
-            <p className="text-green-800 font-medium">
-              เพิ่มใน Inventory สำเร็จ!
+            <p className="text-green-800 font-medium text-sm">
+              เพิ่มในคลังสำเร็จ!
             </p>
             <p className="text-green-600 text-sm">
               รายการจะถูกรวมตาม SKU เดียวกัน
@@ -172,7 +131,6 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
       {/* Product Info Summary */}
       <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
         <div className="text-sm">
-          {/* <div className="font-medium text-blue-900">{product.name}</div> */}
           <div className="text-blue-700 text-xs mt-1">
             Material Code: {product.id || product.barcode}
           </div>
@@ -191,7 +149,7 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
           </span>
         </div>
 
-        {/* ✅ Single simplified quantity input */}
+        {/* ✅ Single simplified quantity input for EA only */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
@@ -230,18 +188,10 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
               </div>
             </div>
 
-            {/* ✅ Show scanned type indicator */}
+            {/* ✅ Show scanned type indicator - แสดงแค่ EA */}
             <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  barcodeType === "cs"
-                    ? "bg-orange-400"
-                    : barcodeType === "dsp"
-                    ? "bg-green-400"
-                    : "bg-blue-400"
-                }`}
-              ></div>
-              สแกนจากบาร์โค้ด {barcodeType.toUpperCase()}
+              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+              หน่วยนับ: ชิ้น (EA)
             </div>
           </div>
 
@@ -266,7 +216,7 @@ export const InventoryAddSection: React.FC<InventoryAddSectionProps> = ({
         </div>
       </div>
 
-      {/* ✅ Summary display with multi-unit info */}
+      {/* ✅ Summary display */}
       <div className="text-xs text-gray-500 text-center space-y-1">
         <div className="flex items-center justify-center gap-1">
           <span>📦</span>

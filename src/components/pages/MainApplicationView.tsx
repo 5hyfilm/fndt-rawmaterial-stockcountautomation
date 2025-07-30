@@ -1,4 +1,4 @@
-// Path: src/components/pages/MainApplicationView.tsx
+// src/components/pages/MainApplicationView.tsx - Updated to show EA only in UI
 "use client";
 
 import React from "react";
@@ -63,7 +63,7 @@ interface MainApplicationViewProps {
   onToggleTorch: () => void;
 
   // Product Props
-  detectedBarcodeType: "ea" | "dsp" | "cs" | null;
+  detectedBarcodeType: "ea" | null;
   isLoadingProduct: boolean;
   productError: string | null;
   currentInventoryQuantity: number;
@@ -72,7 +72,7 @@ interface MainApplicationViewProps {
   onAddToInventory: (
     product: Product,
     quantityInput: QuantityInput,
-    barcodeType?: "ea" | "dsp" | "cs",
+    barcodeType?: "ea",
     directProductGroup?: string
   ) => boolean;
   onAddNewProduct: (barcode: string) => void;
@@ -88,7 +88,7 @@ interface MainApplicationViewProps {
   onLegacyAddOrUpdateItem: (
     product: Product,
     quantityInput: number,
-    barcodeType?: "ea" | "dsp" | "cs",
+    barcodeType?: "ea",
     directProductGroup?: string
   ) => boolean;
   onLegacyUpdateItemQuantity: (itemId: string, newQuantity: number) => boolean;
@@ -174,7 +174,7 @@ export function MainApplicationView({
   onToggleTorch,
 
   // Product Props
-  detectedBarcodeType,
+  // detectedBarcodeType,
   isLoadingProduct,
   productError,
   currentInventoryQuantity,
@@ -271,7 +271,7 @@ export function MainApplicationView({
                 onToggleTorch={onToggleTorch}
                 // Product props
                 product={product}
-                detectedBarcodeType={detectedBarcodeType}
+                detectedBarcodeType="ea"
                 isLoadingProduct={isLoadingProduct}
                 productError={productError}
                 lastDetectedCode={lastDetectedCode || ""}
@@ -334,7 +334,7 @@ export function MainApplicationView({
                     <ProductInfoSection
                       product={product}
                       barcode={lastDetectedCode || ""}
-                      barcodeType={detectedBarcodeType || undefined}
+                      barcodeType="ea" // 🔴 แก้ไขบรรทัดนี้ - บังคับเป็น "ea" เท่านั้น
                       isLoading={isLoadingProduct}
                       error={productError || undefined}
                       currentInventoryQuantity={currentInventoryQuantity}

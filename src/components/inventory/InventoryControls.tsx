@@ -1,4 +1,4 @@
-// Path: src/components/inventory/InventoryControls.tsx - Enhanced with Unit Type Filter
+// src/components/inventory/InventoryControls.tsx - Updated to remove Unit Type Filter
 "use client";
 
 import React from "react";
@@ -16,7 +16,6 @@ import {
   InventoryItem,
   InventorySummary,
 } from "../../hooks/useInventoryManager";
-import { UnitTypeFilter, UnitFilterType } from "./UnitTypeFilter";
 
 interface InventoryControlsProps {
   inventory: InventoryItem[];
@@ -27,9 +26,9 @@ interface InventoryControlsProps {
   onCategoryChange: (category: string) => void;
   selectedBrand: string;
   onBrandChange: (brand: string) => void;
-  // ✅ NEW: Unit type filter props
-  selectedUnitType: UnitFilterType;
-  onUnitTypeChange: (unitType: UnitFilterType) => void;
+  // 🔴 ลบ Unit type filter props ออก - ไม่ต้องการแล้วเพราะแสดงแค่ EA
+  // selectedUnitType: UnitFilterType;
+  // onUnitTypeChange: (unitType: UnitFilterType) => void;
   // ✅ Updated sortBy type to include fgCode
   sortBy: "name" | "quantity" | "date" | "fgCode";
   sortOrder: "asc" | "desc";
@@ -50,8 +49,9 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
   onCategoryChange,
   selectedBrand,
   onBrandChange,
-  selectedUnitType,
-  onUnitTypeChange,
+  // 🔴 ลบ unit type filter props
+  // selectedUnitType,
+  // onUnitTypeChange,
   sortBy,
   sortOrder,
   onSortChange,
@@ -73,10 +73,8 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
   );
 
   const hasActiveFilters =
-    searchTerm ||
-    selectedCategory !== "all" ||
-    selectedBrand !== "all" ||
-    selectedUnitType !== "all";
+    searchTerm || selectedCategory !== "all" || selectedBrand !== "all";
+  // 🔴 ลบ selectedUnitType !== "all" ออก
 
   // State สำหรับการแสดง/ซ่อน filters dropdown
   const [showFilters, setShowFilters] = React.useState(false);
@@ -140,15 +138,15 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
         </div>
       </div>
 
-      {/* ✅ NEW: Unit Type Filter Section */}
-      <div className="border-t border-gray-100 pt-6">
+      {/* 🔴 ลบ Unit Type Filter Section ออกทั้งหมด - ไม่ต้องการแล้ว */}
+      {/* <div className="border-t border-gray-100 pt-6">
         <UnitTypeFilter
           selectedUnitType={selectedUnitType}
           onUnitTypeChange={onUnitTypeChange}
           inventory={inventory}
           className="mb-6"
         />
-      </div>
+      </div> */}
 
       {/* Advanced Filters Toggle */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
@@ -270,7 +268,7 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
         )}
       </div>
 
-      {/* ✅ Summary Stats */}
+      {/* ✅ Summary Stats - แก้ไขให้เหมาะสมกับ EA เท่านั้น */}
       <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
@@ -281,12 +279,6 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
               รายการสินค้า
             </div>
           </div>
-          {/* <div>
-            <div className="text-2xl font-bold text-green-600">
-              {Object.keys(summary.categories).length}
-            </div>
-            <div className="text-sm text-green-700 font-medium">หมวดหมู่</div>
-          </div> */}
           <div>
             <div className="text-2xl font-bold text-purple-600">
               {Object.keys(summary.brands).length}
@@ -294,10 +286,12 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
             <div className="text-sm text-purple-700 font-medium">แบรนด์</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-orange-600">
-              {summary.quantityBreakdown?.itemsWithMultipleUnits || 0}
+            <div className="text-2xl font-bold text-green-600">
+              {summary.quantityBreakdown?.totalEA || 0}
             </div>
-            <div className="text-sm text-orange-700 font-medium">หลายหน่วย</div>
+            <div className="text-sm text-green-700 font-medium">
+              รวมทั้งหมด (ชิ้น)
+            </div>
           </div>
         </div>
       </div>

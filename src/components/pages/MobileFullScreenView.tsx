@@ -57,7 +57,7 @@ interface MobileFullScreenViewProps {
   onToggleTorch: () => void;
 
   // Product Props
-  detectedBarcodeType: "ea" | "dsp" | "cs" | null;
+  detectedBarcodeType: "ea" | null;
   isLoadingProduct: boolean;
   productError: string | null;
   currentInventoryQuantity: number;
@@ -66,7 +66,7 @@ interface MobileFullScreenViewProps {
   onAddToInventory: (
     product: Product,
     quantityInput: QuantityInput,
-    barcodeType?: "ea" | "dsp" | "cs",
+    barcodeType?: "ea",
     directProductGroup?: string
   ) => boolean;
   onAddNewProduct: (barcode: string) => void;
@@ -139,7 +139,7 @@ export function MobileFullScreenView({
   onToggleTorch,
 
   // Product Props
-  detectedBarcodeType,
+  // detectedBarcodeType,
   isLoadingProduct,
   productError,
   currentInventoryQuantity,
@@ -210,7 +210,7 @@ export function MobileFullScreenView({
           onToggleTorch={onToggleTorch}
           // Product props
           product={product}
-          detectedBarcodeType={detectedBarcodeType}
+          detectedBarcodeType="ea"
           isLoadingProduct={isLoadingProduct}
           productError={productError}
           lastDetectedCode={lastDetectedCode || ""}

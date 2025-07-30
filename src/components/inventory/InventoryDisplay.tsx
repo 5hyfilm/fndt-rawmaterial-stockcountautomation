@@ -1,4 +1,4 @@
-// Path: src/components/inventory/InventoryDisplay.tsx - Enhanced with Collapsible Controls
+// src/components/inventory/InventoryDisplay.tsx - Updated to remove Unit Type Filter
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -14,7 +14,7 @@ import { InventoryList } from "./InventoryList";
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 import { ErrorAlert } from "./ErrorAlert";
 import { LoadingSpinner } from "./LoadingSpinner";
-import { UnitFilterType, filterInventoryByUnitType } from "./UnitTypeFilter";
+// 🔴 ลบ import UnitFilterType และ filterInventoryByUnitType ออก
 
 interface InventoryDisplayProps {
   inventory: InventoryItem[];
@@ -24,7 +24,7 @@ interface InventoryDisplayProps {
   onAddOrUpdateItem: (
     product: Product,
     quantityInput: number,
-    barcodeType?: "ea" | "dsp" | "cs"
+    barcodeType?: "ea" // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA
   ) => boolean;
   onUpdateItemQuantity: (itemId: string, newQuantity: number) => boolean;
   onUpdateItemQuantityDetail?: (
@@ -126,11 +126,10 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
   // ✅ NEW: State for controls visibility
   const [showControls, setShowControls] = useState(true);
 
-  // ✅ Filter states
+  // ✅ Filter states - ลบ selectedUnitType ออก
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
-  const [selectedUnitType, setSelectedUnitType] =
-    useState<UnitFilterType>("all");
+  // 🔴 ลบ selectedUnitType state ออก
 
   // ✅ Sort states - default to F/FG code sorting
   const [sortBy, setSortBy] = useState<SortBy>("fgCode");
@@ -144,12 +143,12 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
     setSortOrder(newSortOrder as SortOrder);
   };
 
-  // ✅ Clear filters handler
+  // ✅ Clear filters handler - ลบ selectedUnitType ออก
   const handleClearFilters = () => {
     setSearchTerm("");
     setSelectedCategory("all");
     setSelectedBrand("all");
-    setSelectedUnitType("all");
+    // 🔴 ลบ setSelectedUnitType("all") ออก
     setSortBy("fgCode");
     setSortOrder("asc");
   };
@@ -159,13 +158,13 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
     setShowControls(!showControls);
   };
 
-  // ✅ Check if any filters are active
+  // ✅ Check if any filters are active - ลบ selectedUnitType ออก
   const hasActiveFilters = useMemo(() => {
     return (
       searchTerm.trim() !== "" ||
       selectedCategory !== "all" ||
       selectedBrand !== "all" ||
-      selectedUnitType !== "all" ||
+      // 🔴 ลบ selectedUnitType !== "all" ออก
       sortBy !== "fgCode" ||
       sortOrder !== "asc"
     );
@@ -173,7 +172,7 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
     searchTerm,
     selectedCategory,
     selectedBrand,
-    selectedUnitType,
+    // 🔴 ลบ selectedUnitType ออก
     sortBy,
     sortOrder,
   ]);
@@ -214,7 +213,7 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
     return success;
   };
 
-  // ✅ Enhanced filtered and sorted inventory with Unit Type filter
+  // ✅ Enhanced filtered and sorted inventory - ลบ Unit Type filter ออก
   const filteredAndSortedInventory = useMemo(() => {
     let filtered = [...inventory];
 
@@ -238,8 +237,8 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
       filtered = filtered.filter((item) => item.brand === selectedBrand);
     }
 
-    // ✅ Apply unit type filter
-    filtered = filterInventoryByUnitType(filtered, selectedUnitType);
+    // 🔴 ลบ unit type filter ออก - ไม่ต้องกรองตามหน่วยแล้ว
+    // filtered = filterInventoryByUnitType(filtered, selectedUnitType);
 
     // Apply sorting
     filtered.sort((a, b) => {
@@ -250,19 +249,9 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
           comparison = a.productName.localeCompare(b.productName, "th");
           break;
         case "quantity":
-          // ✅ Enhanced quantity comparison supporting multi-unit
-          const aQty = a.quantities
-            ? Object.values(a.quantities).reduce(
-                (sum, qty) => sum + (qty || 0),
-                0
-              )
-            : a.quantity || 0;
-          const bQty = b.quantities
-            ? Object.values(b.quantities).reduce(
-                (sum, qty) => sum + (qty || 0),
-                0
-              )
-            : b.quantity || 0;
+          // ✅ Enhanced quantity comparison supporting multi-unit - แต่แสดงแค่ EA
+          const aQty = a.quantities?.ea || a.quantity || 0; // 🔴 ใช้แค่ EA quantity
+          const bQty = b.quantities?.ea || b.quantity || 0; // 🔴 ใช้แค่ EA quantity
           comparison = aQty - bQty;
           break;
         case "date":
@@ -293,7 +282,7 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
     searchTerm,
     selectedCategory,
     selectedBrand,
-    selectedUnitType,
+    // 🔴 ลบ selectedUnitType ออก
     sortBy,
     sortOrder,
     onSearch,
@@ -303,18 +292,17 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
   const handleEditStart = (item: InventoryItem) => {
     console.log("✏️ Starting edit for item:", item.id, item.materialCode);
 
-    const totalQuantity = item.quantities
-      ? Object.values(item.quantities).reduce((sum, qty) => sum + (qty || 0), 0)
-      : item.quantity || 0;
+    // 🔴 ใช้แค่ EA quantity สำหรับ editing
+    const totalQuantity = item.quantities?.ea || item.quantity || 0;
 
     setEditState({
       itemId: item.id,
       simpleQuantity: totalQuantity,
       quantityDetail: item.quantities
         ? {
-            cs: item.quantities.cs || 0,
-            dsp: item.quantities.dsp || 0,
-            ea: item.quantities.ea || 0,
+            cs: item.quantities.cs || 0, // 🔴 เก็บค่าเดิมของ backend
+            dsp: item.quantities.dsp || 0, // 🔴 เก็บค่าเดิมของ backend
+            ea: item.quantities.ea || 0, // ✅ แสดงใน UI
             isManualEdit: true,
             lastModified: new Date().toISOString(),
           }
@@ -470,8 +458,7 @@ export const InventoryDisplay: React.FC<InventoryDisplayProps> = ({
               onCategoryChange={setSelectedCategory}
               selectedBrand={selectedBrand}
               onBrandChange={setSelectedBrand}
-              selectedUnitType={selectedUnitType}
-              onUnitTypeChange={setSelectedUnitType}
+              // 🔴 ลบ selectedUnitType และ onUnitTypeChange props ออก
               sortBy={sortBy}
               sortOrder={sortOrder}
               onSortChange={handleSortChange}

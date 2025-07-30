@@ -1,4 +1,4 @@
-// src/components/product/ProductInfo.tsx - Updated with QuantityInput Support
+// src/components/product/ProductInfo.tsx - Updated to show EA only in UI
 "use client";
 
 import React, { useState } from "react";
@@ -23,13 +23,13 @@ import {
 interface ProductInfoProps {
   product: Product | null;
   barcode?: string;
-  barcodeType?: "ea" | "dsp" | "cs";
+  barcodeType?: "ea"; // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   isLoading?: boolean;
   error?: string;
   onAddToInventory?: (
     product: Product,
-    quantityInput: QuantityInput, // ✅ Changed from quantity: number to quantityInput: QuantityInput
-    barcodeType?: "ea" | "dsp" | "cs"
+    quantityInput: QuantityInput,
+    barcodeType?: "ea" // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   ) => boolean;
   currentInventoryQuantity?: number;
 }
@@ -37,7 +37,7 @@ interface ProductInfoProps {
 export const ProductInfo: React.FC<ProductInfoProps> = ({
   product,
   barcode,
-  barcodeType,
+  // barcodeType,
   isLoading,
   error,
   onAddToInventory,
@@ -103,9 +103,9 @@ export const ProductInfo: React.FC<ProductInfoProps> = ({
           <InventoryAddSection
             product={product!}
             currentInventoryQuantity={currentInventoryQuantity}
-            onAddToInventory={onAddToInventory!} // ✅ Passes through with new signature
+            onAddToInventory={onAddToInventory!}
             isVisible={true}
-            barcodeType={barcodeType}
+            barcodeType="ea" // 🔴 บังคับให้เป็น "ea" เท่านั้น - ไม่แสดง CS/DSP ใน UI
           />
         )}
 

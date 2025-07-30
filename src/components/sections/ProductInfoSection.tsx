@@ -1,4 +1,4 @@
-// ./src/components/sections/ProductInfoSection.tsx - Updated with QuantityInput Support
+// src/components/sections/ProductInfoSection.tsx - Updated to show EA only in UI
 "use client";
 
 import React from "react";
@@ -10,22 +10,22 @@ import { QuantityInput } from "../../types/inventory"; // ✅ Import QuantityInp
 interface ProductInfoSectionProps {
   product: Product | null;
   barcode?: string;
-  barcodeType?: "ea" | "dsp" | "cs";
+  barcodeType?: "ea"; // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   isLoading: boolean;
   error?: string;
   currentInventoryQuantity: number;
   isMobile: boolean;
   onAddToInventory: (
     product: Product,
-    quantityInput: QuantityInput, // ✅ Changed from quantity: number to quantityInput: QuantityInput
-    barcodeType?: "ea" | "dsp" | "cs"
+    quantityInput: QuantityInput,
+    barcodeType?: "ea" // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   ) => boolean;
 }
 
 export const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
   product,
   barcode,
-  barcodeType,
+  // barcodeType,
   isLoading,
   error,
   currentInventoryQuantity,
@@ -51,7 +51,7 @@ export const ProductInfoSection: React.FC<ProductInfoSectionProps> = ({
       <ProductInfo
         product={product}
         barcode={barcode}
-        barcodeType={barcodeType}
+        barcodeType="ea" // 🔴 บังคับเป็น "ea" เท่านั้น - ไม่แสดง CS/DSP ใน UI
         isLoading={isLoading}
         error={error}
         onAddToInventory={onAddToInventory} // ✅ Passes through with new signature

@@ -1,4 +1,4 @@
-// ./src/components/layout/MobileProductSlide.tsx
+// src/components/layout/MobileProductSlide.tsx - Updated to show EA only in UI
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
@@ -10,7 +10,7 @@ import { QuantityInput } from "../../types/inventory";
 interface MobileProductSlideProps {
   isVisible: boolean;
   product: Product | null;
-  detectedBarcodeType?: "ea" | "dsp" | "cs";
+  detectedBarcodeType?: "ea"; // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   currentInventoryQuantity: number;
   scannedBarcode?: string;
   productError?: string;
@@ -18,7 +18,7 @@ interface MobileProductSlideProps {
   onAddToInventory: (
     product: Product,
     quantityInput: QuantityInput,
-    barcodeType?: "ea" | "dsp" | "cs"
+    barcodeType?: "ea" // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   ) => boolean;
   onAddNewProduct?: (barcode: string) => void;
   children?: React.ReactNode;
@@ -27,7 +27,7 @@ interface MobileProductSlideProps {
 export const MobileProductSlide: React.FC<MobileProductSlideProps> = ({
   isVisible,
   product,
-  detectedBarcodeType,
+  // detectedBarcodeType,
   currentInventoryQuantity,
   scannedBarcode = "",
   productError,
@@ -295,7 +295,7 @@ export const MobileProductSlide: React.FC<MobileProductSlideProps> = ({
             <ProductInfo
               product={product}
               barcode={scannedBarcode}
-              barcodeType={detectedBarcodeType}
+              barcodeType="ea" // 🔴 บังคับเป็น "ea" เท่านั้น - ไม่แสดง CS/DSP ใน UI
               isLoading={false}
               error={productError}
               onAddToInventory={onAddToInventory}

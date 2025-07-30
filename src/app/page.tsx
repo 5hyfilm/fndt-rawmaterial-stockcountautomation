@@ -1,4 +1,4 @@
-// Path: src/app/page.tsx
+// src/app/page.tsx - Updated to show EA only in UI
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -392,7 +392,7 @@ export default function BarcodeDetectionPage() {
         torchOn={torchOn}
         onToggleTorch={toggleTorch}
         // Product Props
-        detectedBarcodeType={detectedBarcodeType}
+        detectedBarcodeType="ea" // 🔴 แก้ไขบรรทัดนี้ - บังคับเป็น "ea" เท่านั้น
         isLoadingProduct={isLoadingProduct}
         productError={productError}
         currentInventoryQuantity={currentInventoryQuantity}
@@ -457,7 +457,7 @@ export default function BarcodeDetectionPage() {
       torchOn={torchOn}
       onToggleTorch={toggleTorch}
       // Product Props
-      detectedBarcodeType={detectedBarcodeType}
+      detectedBarcodeType="ea" // 🔴 แก้ไขบรรทัดนี้ - บังคับเป็น "ea" เท่านั้น
       isLoadingProduct={isLoadingProduct}
       productError={productError}
       currentInventoryQuantity={currentInventoryQuantity}

@@ -1,4 +1,4 @@
-// src/components/layout/MobileScannerLayout.tsx
+// src/components/layout/MobileScannerLayout.tsx - Updated to show EA only in UI
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -31,7 +31,7 @@ interface MobileScannerLayoutProps {
 
   // Product props
   product: Product | null;
-  detectedBarcodeType?: "ea" | "dsp" | "cs" | null;
+  detectedBarcodeType?: "ea" | null; // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   isLoadingProduct: boolean;
   productError: string | null;
   lastDetectedCode: string;
@@ -41,7 +41,7 @@ interface MobileScannerLayoutProps {
   onAddToInventory: (
     product: Product,
     quantityInput: QuantityInput,
-    barcodeType?: "ea" | "dsp" | "cs"
+    barcodeType?: "ea" // 🔴 ลบ "dsp" | "cs" ออก - แสดงแค่ EA ใน UI
   ) => boolean;
   onAddNewProduct?: (barcode: string) => void;
   restartForNextScan: () => void;
@@ -75,7 +75,7 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
 
   // Product props
   product,
-  detectedBarcodeType,
+  // detectedBarcodeType,
   isLoadingProduct,
   productError,
   lastDetectedCode,
@@ -245,7 +245,7 @@ export const MobileScannerLayout: React.FC<MobileScannerLayoutProps> = ({
       <MobileProductSlide
         isVisible={showProductSlide}
         product={product}
-        detectedBarcodeType={detectedBarcodeType || undefined}
+        detectedBarcodeType="ea" // 🔴 บังคับเป็น "ea" เท่านั้น - ไม่แสดง CS/DSP ใน UI
         currentInventoryQuantity={currentInventoryQuantity}
         scannedBarcode={scannedBarcode || lastDetectedCode}
         productError={productError || undefined}

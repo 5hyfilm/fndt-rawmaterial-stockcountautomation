@@ -1,16 +1,15 @@
-// Path: src/components/inventory/InventoryListItem.tsx - Cleaned Version (No Legacy Code)
+// src/components/inventory/InventoryListItem.tsx - Updated to show EA only in UI
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Package,
+  // Package,
   Edit3,
   Trash2,
   Plus,
   Minus,
   CheckCircle,
   X,
-  Archive,
   Package2,
   Clock,
 } from "lucide-react";
@@ -32,19 +31,17 @@ interface InventoryListItemProps {
   onQuickAdjust: (delta: number) => void;
   onRemove: () => void;
   onUpdateUnitQuantity?: (
-    unit: "cs" | "dsp" | "ea",
+    unit: "ea", // 🔴 ลบ "cs" | "dsp" ออก - แสดงแค่ EA ใน UI
     newQuantity: number
   ) => void;
 }
 
-// ✅ Enhanced edit state for multi-unit support
+// ✅ Simplified edit state for EA only
 interface EditState {
-  csQuantity: number;
-  dspQuantity: number;
-  eaQuantity: number;
+  eaQuantity: number; // 🔴 เหลือแค่ EA เท่านั้น
 }
 
-// ✅ Unit configuration with proper styling
+// ✅ Unit configuration - เหลือแค่ EA ใน UI
 const UNIT_CONFIG = {
   ea: {
     label: "ชิ้น",
@@ -54,22 +51,7 @@ const UNIT_CONFIG = {
     iconClass: "text-blue-500",
     priority: 1,
   },
-  dsp: {
-    label: "แพ็ค",
-    shortLabel: "DSP",
-    icon: Package,
-    color: "bg-green-100 text-green-700 border-green-200",
-    iconClass: "text-green-500",
-    priority: 2,
-  },
-  cs: {
-    label: "ลัง",
-    shortLabel: "CS",
-    icon: Archive,
-    color: "bg-purple-100 text-purple-700 border-purple-200",
-    iconClass: "text-purple-500",
-    priority: 3,
-  },
+  // 🔴 ลบ dsp และ cs ออกจาก UI config
 };
 
 // ✅ Helper function to format timestamp
@@ -148,49 +130,41 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Initialize edit state (ไม่มี optional chaining - quantities เป็น required)
+  // ✅ Initialize edit state - แค่ EA เท่านั้น
   const [editState, setEditState] = useState<EditState>(() => {
     return {
-      csQuantity: item.quantities.cs || 0,
-      dspQuantity: item.quantities.dsp || 0,
-      eaQuantity: item.quantities.ea || 0,
+      eaQuantity: item.quantities.ea || 0, // 🔴 เหลือแค่ EA
     };
   });
 
-  // ✅ Show all 3 units always
-  const getAllUnits = (): Array<"cs" | "dsp" | "ea"> => {
-    return ["cs", "dsp", "ea"];
-  };
+  // ✅ Show only EA unit
+  // const getAllUnits = (): Array<"ea"> => {
+  //   return ["ea"]; // 🔴 เหลือแค่ EA เท่านั้น
+  // };
 
-  // ✅ Check units with quantity > 0 (ไม่มี optional chaining)
-  const getActiveUnits = (): Array<"cs" | "dsp" | "ea"> => {
-    return (["cs", "dsp", "ea"] as const).filter(
-      (unit) => (item.quantities[unit] || 0) > 0
-    );
-  };
+  // ✅ Check EA unit with quantity > 0
+  // const getActiveUnits = (): Array<"ea"> => {
+  //   const eaQuantity = item.quantities.ea || 0;
+  //   return eaQuantity > 0 ? ["ea"] : [];
+  // };
 
-  const allUnits = getAllUnits();
-  const activeUnits = getActiveUnits();
+  // const allUnits = getAllUnits();
+  // const activeUnits = getActiveUnits();
 
-  // ✅ Get primary unit for header display
-  const getPrimaryUnit = (): "cs" | "dsp" | "ea" => {
-    if (activeUnits.length === 0) return "ea"; // Default
-    return activeUnits.sort(
-      (a, b) => UNIT_CONFIG[a].priority - UNIT_CONFIG[b].priority
-    )[0];
+  // ✅ Primary unit is always EA
+  const getPrimaryUnit = (): "ea" => {
+    return "ea"; // 🔴 บังคับเป็น EA เสมอ
   };
 
   const primaryUnit = getPrimaryUnit();
   const primaryUnitConfig = UNIT_CONFIG[primaryUnit];
 
-  // ✅ Update edit state when item changes (ไม่มี optional chaining)
+  // ✅ Update edit state when item changes - แค่ EA
   useEffect(() => {
     setEditState({
-      csQuantity: item.quantities.cs || 0,
-      dspQuantity: item.quantities.dsp || 0,
-      eaQuantity: item.quantities.ea || 0,
+      eaQuantity: item.quantities.ea || 0, // 🔴 เหลือแค่ EA
     });
-  }, [item.quantities]);
+  }, [item.quantities.ea]); // 🔴 dependency แค่ ea
 
   // ✅ Focus input when editing starts
   useEffect(() => {
@@ -199,16 +173,13 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
     }
   }, [isEditing]);
 
-  // ✅ Handle unit quantity change
-  const handleUnitQuantityChange = (
-    unit: "cs" | "dsp" | "ea",
-    newQuantity: number
-  ) => {
+  // ✅ Handle unit quantity change - รองรับแค่ EA
+  const handleUnitQuantityChange = (unit: "ea", newQuantity: number) => {
     if (newQuantity < 0) return;
 
     const updatedState = {
       ...editState,
-      [unit + "Quantity"]: newQuantity,
+      eaQuantity: newQuantity, // 🔴 แค่ EA เท่านั้น
     };
     setEditState(updatedState);
 
@@ -217,12 +188,12 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
       onUpdateUnitQuantity(unit, newQuantity);
     }
 
-    // Update quantity detail for all items
+    // Update quantity detail - ส่งข้อมูล backend ครบ 3 หน่วยแต่ UI แสดงแค่ EA
     if (onEditQuantityDetailChange) {
       const quantityDetail: QuantityDetail = {
-        cs: updatedState.csQuantity,
-        dsp: updatedState.dspQuantity,
-        ea: updatedState.eaQuantity,
+        cs: item.quantities.cs || 0, // 🔴 เก็บค่าเดิมของ backend
+        dsp: item.quantities.dsp || 0, // 🔴 เก็บค่าเดิมของ backend
+        ea: updatedState.eaQuantity, // ✅ อัปเดตแค่ EA ที่ user แก้ไข
         isManualEdit: true,
         lastModified: new Date().toISOString(),
       };
@@ -234,9 +205,9 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
   const handleSave = () => {
     if (onEditQuantityDetailSave) {
       const quantityDetail: QuantityDetail = {
-        cs: editState.csQuantity,
-        dsp: editState.dspQuantity,
-        ea: editState.eaQuantity,
+        cs: item.quantities.cs || 0, // 🔴 เก็บค่าเดิมของ backend
+        dsp: item.quantities.dsp || 0, // 🔴 เก็บค่าเดิมของ backend
+        ea: editState.eaQuantity, // ✅ อัปเดตแค่ EA ที่ user แก้ไข
         isManualEdit: true,
         lastModified: new Date().toISOString(),
       };
@@ -264,126 +235,99 @@ export const InventoryListItem: React.FC<InventoryListItemProps> = ({
     );
   };
 
-  // ✅ Mobile responsive quantity display (ไม่มี optional chaining)
+  // ✅ Simplified quantity display - แสดงแค่ EA
   const renderQuantityDisplay = () => {
+    const eaQuantity = item.quantities.ea || 0;
+    const config = UNIT_CONFIG.ea;
+    const hasQuantity = eaQuantity > 0;
+
     return (
       <div className="text-right min-w-0">
-        {/* Mobile: Stack vertically, Desktop: Horizontal */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 justify-end">
-          {allUnits.map((unit, index) => {
-            const config = UNIT_CONFIG[unit];
-            const quantity = item.quantities[unit] || 0; // ไม่มี optional chaining
-            const hasQuantity = quantity > 0;
-
-            return (
-              <div key={unit} className="flex items-center justify-end gap-1">
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                    hasQuantity
-                      ? config.color
-                      : "bg-gray-100 text-gray-400 border-gray-200"
-                  }`}
-                >
-                  {config.shortLabel}
-                </span>
-                <span
-                  className={`text-sm font-bold ${
-                    hasQuantity ? "text-gray-900" : "text-gray-400"
-                  }`}
-                >
-                  {quantity}
-                </span>
-                {/* Remove separators on mobile */}
-                {index !== allUnits.length - 1 && (
-                  <span className="text-gray-300 text-sm hidden sm:inline">
-                    |
-                  </span>
-                )}
-              </div>
-            );
-          })}
+        <div className="flex items-center gap-2 justify-end">
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+              hasQuantity
+                ? config.color
+                : "bg-gray-100 text-gray-400 border-gray-200"
+            }`}
+          >
+            {config.shortLabel}
+          </span>
+          <span
+            className={`text-sm font-bold ${
+              hasQuantity ? "text-gray-900" : "text-gray-400"
+            }`}
+          >
+            {eaQuantity}
+          </span>
         </div>
       </div>
     );
   };
 
-  // ✅ Mobile-friendly editing interface
+  // ✅ Simplified editing interface - แค่ EA
   const renderEditingInterface = () => {
+    const config = UNIT_CONFIG.ea;
+    const quantity = editState.eaQuantity;
+    const Icon = config.icon;
+
     return (
       <div className="space-y-3">
         <div className="text-sm font-medium text-gray-700 mb-2">
           แก้ไขจำนวนสินค้า
         </div>
 
-        {/* Mobile: Stack units vertically, Desktop: Can be side by side */}
-        <div className="grid grid-cols-1 gap-3">
-          {allUnits.map((unit) => {
-            const config = UNIT_CONFIG[unit];
-            const quantity = editState[
-              (unit + "Quantity") as keyof EditState
-            ] as number;
-            const Icon = config.icon;
+        {/* EA quantity editing only */}
+        <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
+          {/* Unit Badge with Icon - Responsive sizing */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <div className={`p-1.5 sm:p-2 rounded-lg ${config.color}`}>
+              <Icon size={14} className="sm:w-4 sm:h-4" />
+            </div>
+            <span
+              className={`text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-full ${config.color}`}
+            >
+              {config.shortLabel}
+            </span>
+          </div>
 
-            return (
-              <div
-                key={unit}
-                className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                {/* Unit Badge with Icon - Responsive sizing */}
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                  <div className={`p-1.5 sm:p-2 rounded-lg ${config.color}`}>
-                    <Icon size={14} className="sm:w-4 sm:h-4" />
-                  </div>
-                  <span
-                    className={`text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-full ${config.color}`}
-                  >
-                    {config.shortLabel}
-                  </span>
-                </div>
+          {/* Quantity Controls - Touch-friendly */}
+          <div className="flex items-center gap-2 flex-1">
+            {/* Touch-friendly buttons */}
+            <button
+              type="button"
+              onClick={() => handleUnitQuantityChange("ea", quantity - 1)}
+              className="min-w-[44px] min-h-[44px] sm:w-8 sm:h-8 flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={quantity <= 0}
+            >
+              <Minus size={16} className="sm:w-3.5 sm:h-3.5" />
+            </button>
 
-                {/* Quantity Controls - Touch-friendly */}
-                <div className="flex items-center gap-2 flex-1">
-                  {/* Touch-friendly buttons */}
-                  <button
-                    type="button"
-                    onClick={() => handleUnitQuantityChange(unit, quantity - 1)}
-                    className="min-w-[44px] min-h-[44px] sm:w-8 sm:h-8 flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    disabled={quantity <= 0}
-                  >
-                    <Minus size={16} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
+            {/* Touch-friendly input */}
+            <input
+              ref={inputRef}
+              type="number"
+              value={quantity}
+              onChange={(e) =>
+                handleUnitQuantityChange("ea", parseInt(e.target.value) || 0)
+              }
+              className="w-16 sm:w-20 px-2 sm:px-3 py-2 sm:py-2 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-base sm:text-sm"
+              min="0"
+              inputMode="numeric"
+            />
 
-                  {/* Touch-friendly input */}
-                  <input
-                    ref={unit === "cs" ? inputRef : undefined}
-                    type="number"
-                    value={quantity}
-                    onChange={(e) =>
-                      handleUnitQuantityChange(
-                        unit,
-                        parseInt(e.target.value) || 0
-                      )
-                    }
-                    className="w-16 sm:w-20 px-2 sm:px-3 py-2 sm:py-2 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-base sm:text-sm"
-                    min="0"
-                    inputMode="numeric"
-                  />
+            <button
+              type="button"
+              onClick={() => handleUnitQuantityChange("ea", quantity + 1)}
+              className="min-w-[44px] min-h-[44px] sm:w-8 sm:h-8 flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              <Plus size={16} className="sm:w-3.5 sm:h-3.5" />
+            </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleUnitQuantityChange(unit, quantity + 1)}
-                    className="min-w-[44px] min-h-[44px] sm:w-8 sm:h-8 flex items-center justify-center rounded border border-gray-300 hover:bg-gray-50 transition-colors"
-                  >
-                    <Plus size={16} className="sm:w-3.5 sm:h-3.5" />
-                  </button>
-
-                  <span className="text-sm text-gray-600 ml-1 sm:ml-2 hidden sm:inline">
-                    {config.label}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+            <span className="text-sm text-gray-600 ml-1 sm:ml-2 hidden sm:inline">
+              {config.label}
+            </span>
+          </div>
         </div>
 
         {/* Action Buttons - Touch-friendly */}
