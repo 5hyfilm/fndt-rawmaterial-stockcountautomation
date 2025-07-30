@@ -114,19 +114,18 @@ interface MainApplicationViewProps {
   hasUnsavedData: boolean;
   unsavedDataCount: number;
 
-  // Add New Product Form - Updated interface
+  // Add New Product Form - ✅ UPDATED: Removed productName
   showAddProductForm: boolean;
   newProductBarcode: string;
   onCloseAddProductForm: () => void;
   onSaveNewProduct: (productData: {
     barcode: string;
-    productName: string;
     description: string;
     countPieces: number;
   }) => Promise<boolean>;
 }
 
-export function MainApplicationView({
+function MainApplicationView({
   // Export Success Toast
   showExportSuccess,
   exportFileName,
@@ -431,3 +430,5 @@ export function MainApplicationView({
     </div>
   );
 }
+
+export { MainApplicationView };

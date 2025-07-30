@@ -215,10 +215,9 @@ export default function BarcodeDetectionPage() {
     setShowAddProductForm(true);
   };
 
-  // ✅ FIXED: Updated function signature to match new interface
+  // ✅ UPDATED: Function signature changed to match new interface (removed productName)
   const handleSaveNewProduct = async (productData: {
     barcode: string;
-    productName: string;
     description: string;
     countPieces: number;
   }): Promise<boolean> => {
@@ -231,7 +230,7 @@ export default function BarcodeDetectionPage() {
       const newProduct: Product = {
         id: `NEW_${Date.now()}`,
         barcode: productData.barcode,
-        name: productData.productName,
+        name: productData.barcode, // ✅ CHANGED: Use barcode as name instead of productName
         brand: "สินค้าใหม่",
         category: getProductCategoryFromGroup(defaultProductGroup),
         description: productData.description,

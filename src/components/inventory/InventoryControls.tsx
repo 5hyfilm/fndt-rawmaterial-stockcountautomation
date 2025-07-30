@@ -290,7 +290,7 @@ export const InventoryControls: React.FC<InventoryControlsProps> = ({
               {summary.quantityBreakdown?.totalEA || 0}
             </div>
             <div className="text-sm text-green-700 font-medium">
-              รวมทั้งหมด (ชิ้น)
+              รวมทั้งหมด (kg)
             </div>
           </div>
         </div>

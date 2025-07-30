@@ -6,7 +6,6 @@ import {
   X,
   Save,
   Package,
-  Tag,
   FileText,
   Hash,
   Scan,
@@ -16,14 +15,12 @@ import {
 
 interface NewProductData {
   barcode: string;
-  productName: string;
   description: string;
   countPieces: number;
 }
 
 interface FormErrors {
   barcode?: string;
-  productName?: string;
   description?: string;
   countPieces?: string;
 }
@@ -55,12 +52,6 @@ const sanitizeInput = (input: string): string => {
     .trim();
 };
 
-const sanitizeProductName = (input: string): string => {
-  const sanitized = sanitizeInput(input);
-  // Allow alphanumeric, spaces, hyphens, dots, parentheses, forward slash
-  return sanitized.replace(/[^a-zA-Z0-9ก-๙\s.\-()\/]/g, "").slice(0, 50);
-};
-
 const sanitizeDescription = (input: string): string => {
   const sanitized = sanitizeInput(input);
   // Allow more characters for description but still safe
@@ -68,26 +59,6 @@ const sanitizeDescription = (input: string): string => {
 };
 
 // Validation utilities
-const validateProductName = (productName: string): string | null => {
-  const trimmed = productName.trim();
-
-  if (!trimmed) return "กรุณากรอกรหัสสินค้า";
-  if (trimmed.length < 2) return "รหัสสินค้าต้องมีอย่างน้อย 2 ตัวอักษร";
-  if (trimmed.length > 50) return "รหัสสินค้าไม่ควรเกิน 50 ตัวอักษร";
-
-  // Check for suspicious patterns
-  if (/script|alert|onerror|onload|javascript/i.test(trimmed)) {
-    return "รหัสสินค้ามีรูปแบบที่ไม่อนุญาต";
-  }
-
-  // Must contain at least one alphanumeric character
-  if (!/[a-zA-Z0-9ก-๙]/.test(trimmed)) {
-    return "รหัสสินค้าต้องมีตัวอักษรหรือตัวเลขอย่างน้อย 1 ตัว";
-  }
-
-  return null;
-};
-
 const validateDescription = (description: string): string | null => {
   const trimmed = description.trim();
 
@@ -113,8 +84,8 @@ const validateBarcode = (barcode: string): string | null => {
 };
 
 const validateCount = (count: number): string | null => {
-  if (count <= 0) return "จำนวนชิ้นต้องมากกว่า 0";
-  if (count > 99999) return "จำนวนชิ้นไม่ควรเกิน 99,999";
+  if (count <= 0) return "จำนวนต้องมากกว่า 0";
+  if (count > 99999) return "จำนวนไม่ควรเกิน 99,999";
 
   return null;
 };
@@ -127,7 +98,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<NewProductData>({
     barcode: barcode,
-    productName: "",
     description: "",
     countPieces: 0,
   });
@@ -153,9 +123,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
 
     if (typeof value === "string") {
       switch (field) {
-        case "productName":
-          sanitizedValue = sanitizeProductName(value);
-          break;
         case "description":
           sanitizedValue = sanitizeDescription(value);
           break;
@@ -231,9 +198,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
     const barcodeError = validateBarcode(formData.barcode);
     if (barcodeError) newErrors.barcode = barcodeError;
 
-    const productNameError = validateProductName(formData.productName);
-    if (productNameError) newErrors.productName = productNameError;
-
     const descriptionError = validateDescription(formData.description);
     if (descriptionError) newErrors.description = descriptionError;
 
@@ -255,7 +219,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
       // Final sanitization before saving
       const sanitizedData: NewProductData = {
         ...formData,
-        productName: sanitizeProductName(formData.productName),
         description: sanitizeDescription(formData.description),
         barcode: formData.barcode.trim(),
       };
@@ -278,7 +241,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
   const handleClose = (): void => {
     setFormData({
       barcode: "",
-      productName: "",
       description: "",
       countPieces: 0,
     });
@@ -384,35 +346,6 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 </p>
               </div>
 
-              {/* Product Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <Tag size={16} />
-                  รหัสสินค้า
-                </label>
-                <input
-                  type="text"
-                  value={formData.productName}
-                  onChange={(e) => updateField("productName", e.target.value)}
-                  maxLength={50}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm ${
-                    errors.productName ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="กรอกรหัสสินค้า"
-                  disabled={isLoading}
-                />
-                {formData.productName.length > 30 && (
-                  <p className="text-yellow-600 text-xs mt-1">
-                    ความยาว: {formData.productName.length}/50 ตัวอักษร
-                  </p>
-                )}
-                {errors.productName && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.productName}
-                  </p>
-                )}
-              </div>
-
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -442,11 +375,11 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 )}
               </div>
 
-              {/* Count Section - Only Pieces */}
+              {/* Count Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   <Hash size={16} />
-                  จำนวน kg
+                  จำนวน (กิโลกรัม)
                 </label>
                 <input
                   type="number"
@@ -454,10 +387,11 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                   onChange={(e) => handleCountChange(e.target.value)}
                   min="1"
                   max="99999"
+                  step="0.1"
                   className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-fn-green focus:border-transparent transition-colors text-sm ${
                     errors.countPieces ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="กรอกจำนวนชิ้น"
+                  placeholder="กรอกจำนวนกิโลกรัม"
                   disabled={isLoading}
                 />
                 {errors.countPieces && (
@@ -472,7 +406,10 @@ export const AddNewProductForm: React.FC<AddNewProductFormProps> = ({
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <p className="text-sm text-blue-800">
                     <span className="font-medium">จะเพิ่ม: </span>
-                    {formData.countPieces} ชิ้น
+                    {formData.countPieces} กิโลกรัม
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    บาร์โค้ด: {formData.barcode}
                   </p>
                 </div>
               )}

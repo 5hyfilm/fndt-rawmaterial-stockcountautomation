@@ -1,4 +1,4 @@
-// Path: src/components/pages/MobileFullScreenView.tsx
+// src/components/pages/MobileFullScreenView.tsx
 "use client";
 
 import React from "react";
@@ -79,13 +79,12 @@ interface MobileFullScreenViewProps {
   hasUnsavedData: boolean;
   unsavedDataCount: number;
 
-  // Add New Product Form - ✅ FIXED: Updated interface to match NewProductData
+  // Add New Product Form - ✅ COMPLETELY SIMPLIFIED: Only 3 fields
   showAddProductForm: boolean;
   newProductBarcode: string;
   onCloseAddProductForm: () => void;
   onSaveNewProduct: (productData: {
     barcode: string;
-    productName: string;
     description: string;
     countPieces: number;
   }) => Promise<boolean>;
