@@ -6,7 +6,7 @@ AI-powered barcode scanning system with Next.js frontend and Python Flask backen
 
 - **Real-time webcam scanning** with YOLO v5 object detection
 - **Multi-format support**: QR Code, Code 128, Code 39, EAN, UPC
-- **Multiple barcode types**: EA (Each), DSP (Display Pack), CS (Case/Carton)
+- **Multiple barcode types**: KG
 - **CSV-based product database** with automatic loading from `/public/product_list_csv.csv`
 - **Employee authentication** with branch and session management
 - **Inventory tracking** with history logging
@@ -49,17 +49,42 @@ python(3) app.py
 
 ```
 ├── src/
-│   ├── app/api/detect-barcode/    # Barcode detection API
-│   ├── components/                # Components
-│   ├── hooks/                     # React hooks
-│   └── types/                     # TypeScript definitions
+│   ├── app/
+│   │   └── api/detect-barcode/    # Barcode detection API route
+│   │       └── route.ts           # Next.js API endpoint
+│   ├── components/                # React components
+│   ├── hooks/                     # Custom React hooks
+│   └── types/                     # TypeScript type definitions
 ├── backend/
-│   ├── app.py                     # Flask application
-│   └── requirements.txt           # Python dependencies
-├── public/product_list_csv.csv    # Product database
-├── docker-compose.yml             # Container setup
-└── Dockerfile                     # Frontend container
+│   ├── app.py                     # Flask application entry point
+│   ├── requirements.txt           # Python dependencies
+│   └── Dockerfile                 # Backend container configuration
+├── public/
+│   └── product_list_csv.csv       # Product database (CSV format)
+├── docker-compose.yml             # Multi-container orchestration
+├── Dockerfile                     # Frontend container configuration
+├── .dockerignore                  # Docker build exclusions
+├── package.json                   # Node.js dependencies
+├── next.config.js                 # Next.js configuration
+└── README.md                      # Project documentation
 ```
+
+## Docker Architecture
+
+### Frontend Container
+
+- **Base**: `node:18-alpine`
+- **Build**: Multi-stage build with optimization
+- **Port**: 3000
+- **Health Check**: Built-in Node.js health endpoint
+
+### Backend Container
+
+- **Base**: `python:3.9`
+- **ML Dependencies**: OpenCV, YOLO v5, pyzbar
+- **Port**: 8000
+- **Health Check**: `/api/health` endpoint
+- **Security**: Non-root user execution
 
 ## API Endpoints
 
@@ -91,10 +116,6 @@ PYTHONUNBUFFERED=1
 
 Place CSV file at `/public/product_list_csv.csv` with format:
 Material, Description, Thai Desc., Pack Size, Product Group, Bar Code EA/DSP/CS
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Reference
 
